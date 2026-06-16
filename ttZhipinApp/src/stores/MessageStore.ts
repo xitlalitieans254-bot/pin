@@ -62,10 +62,10 @@ export default class MessageStore {
 
 
 
-    requestOfflineMessageList = flow(function* (this: MessageStore, clientSequence: number, callback: (success: PrivateChatMessage[]) => void) {
+    requestOfflineMessageList = flow(function* (this: MessageStore, clientSequence: SnowflakeIdInput, callback: (success: PrivateChatMessage[]) => void) {
         try {
             const params = {
-                clientSequence: clientSequence
+                clientSequence: String(clientSequence)
             };
 
             const { data } = yield ApiService.request('offlineMessageList', params);

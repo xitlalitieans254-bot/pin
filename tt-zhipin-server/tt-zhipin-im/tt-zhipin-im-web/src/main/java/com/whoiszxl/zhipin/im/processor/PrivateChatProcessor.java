@@ -64,6 +64,7 @@ public class PrivateChatProcessor {
         //防止重复提交，保证消息幂等性，先从缓存中获取，如果缓存中存在说明已经发送成功了一次，在一定间隔时间内不允许再次发送
         PrivateChatPack privateChatCache = messageIdempotentService.getPrivateChatMessageCache(privateChatPack);
         if(privateChatCache != null) {
+            threadPoolExecutor.execute(() -> ack(privateChatCache, AckStatusEnum.SUCCESS));
             return;
         }
 

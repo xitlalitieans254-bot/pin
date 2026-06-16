@@ -2,6 +2,7 @@ package com.whoiszxl.zhipin.im.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -33,6 +34,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -147,13 +149,61 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
 
     @Override
     public List<ChatMessage> listOfflineMessage(OfflineListQuery query) {
+        Long clientSequence = parseClientSequence(query.getClientSequence());
         String key = String.format("%s:%s", "offlineMessage", tokenHelper.getAppMemberId());
-        Set<String> setList = redisUtils.zRangeByScore(key, Double.parseDouble(query.getClientSequence()));
+        Set<String> setList = redisUtils.zRangeByScore(key, clientSequence.doubleValue());
         List<ChatMessage> chatMessages = new ArrayList<>();
         for (String s : setList) {
-            chatMessages.add(JSONUtil.toBean(s, ChatMessage.class));
+            ChatMessage chatMessage = JSONUtil.toBean(s, ChatMessage.class);
+            Long messageSequence = resolveMessageSequence(chatMessage);
+            if (messageSequence == null || messageSequence > clientSequence) {
+                chatMessages.add(chatMessage);
+            }
         }
         return chatMessages;
+    }
+
+    private Long parseClientSequence(String clientSequence) {
+        if (clientSequence == null || clientSequence.trim().isEmpty()) {
+            return 0L;
+        }
+        try {
+            return Long.parseLong(clientSequence);
+        } catch (NumberFormatException e) {
+            log.warn("invalid offline message client sequence: {}", clientSequence);
+            return 0L;
+        }
+    }
+
+    private Long resolveMessageSequence(ChatMessage chatMessage) {
+        if (chatMessage == null || chatMessage.getData() == null) {
+            return null;
+        }
+
+        Object data = chatMessage.getData();
+        if (data instanceof PrivateChatPack) {
+            return ((PrivateChatPack) data).getSequence();
+        }
+        if (data instanceof JSONObject) {
+            return ((JSONObject) data).getLong("sequence");
+        }
+        if (data instanceof Map) {
+            return toLong(((Map) data).get("sequence"));
+        }
+        if (data instanceof CharSequence) {
+            return JSONUtil.parseObj(data).getLong("sequence");
+        }
+        return null;
+    }
+
+    private Long toLong(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
+        }
+        return Long.parseLong(String.valueOf(value));
     }
 
     private GroupMessage buildGroupMessage(GroupChatPack groupChatPack, long contentId) {
@@ -163,7 +213,7 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
         groupMessage.setContentId(contentId);
         groupMessage.setOwnerMemberId(groupChatPack.getFromMemberId());
         groupMessage.setMessageType(0);  //TODO 待实现图片类型、语音类型
-        groupMessage.setSequence(groupMessage.getSequence());
+        groupMessage.setSequence(groupChatPack.getSequence());
         return groupMessage;
     }
 }

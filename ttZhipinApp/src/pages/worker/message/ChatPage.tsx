@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { GiftedChat, Bubble, Send, IMessage, InputToolbar } from 'react-native-gifted-chat';
 // 引入中文语言包
 import 'dayjs/locale/zh-cn';
@@ -14,6 +14,29 @@ import StorageUtil from '../../../utils/StorageUtil';
 import { CommonConstant } from '../../../common/CommonConstant';
 import uuid from 'react-native-uuid';
 
+const privateChatTableSql = "CREATE TABLE IF NOT EXISTS " + CommonConstant.IM_PRIVATE_CHAT_TABLE + " (id INTEGER PRIMARY KEY AUTOINCREMENT, content_id TEXT UNIQUE, owner_member_id TEXT, from_member_id TEXT, to_member_id TEXT, body TEXT);";
+const insertPrivateChatSql = "INSERT OR IGNORE INTO " + CommonConstant.IM_PRIVATE_CHAT_TABLE + " (content_id, owner_member_id, from_member_id, to_member_id, body) VALUES (?, ?, ?, ?, ?)";
+
+const getCounterpartMemberId = (chat: PrivateChatMessage, currentMemberId?: string) => {
+  const fromMemberId = String(chat.data.fromMemberId);
+  const toMemberId = String(chat.data.toMemberId);
+  if (currentMemberId) {
+    return fromMemberId === currentMemberId ? toMemberId : fromMemberId;
+  }
+  return chat.command === command.MessageCommand.PRIVATE_CHAT_ACK ? toMemberId : fromMemberId;
+};
+
+const savePrivateChatMessage = (chat: PrivateChatMessage, rawMessage: string, currentMemberId?: string) => {
+  return DatabaseHelper.initializeDatabase(CommonConstant.IM_DB_NAME)
+    .then(() => DatabaseHelper.executeQuery(privateChatTableSql))
+    .then(() => DatabaseHelper.executeQuery(insertPrivateChatSql, [
+      String(chat.data.contentId),
+      getCounterpartMemberId(chat, currentMemberId),
+      String(chat.data.fromMemberId),
+      String(chat.data.toMemberId),
+      rawMessage,
+    ]));
+};
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<IMessage[]>([]);
@@ -21,6 +44,8 @@ export default function ChatPage() {
   const { params } = useRoute<any>();
 
   const [avatar, setAvatar] = useState<string>('https://shopzz.oss-cn-guangzhou.aliyuncs.com/other/a1.jpg');
+  const [currentMemberId, setCurrentMemberId] = useState<string>('');
+  const currentMemberIdRef = useRef<string>('');
 
 
 
@@ -33,29 +58,34 @@ export default function ChatPage() {
         const memberInfo = JSON.parse(data);
         console.log(memberInfo.id);
         setAvatar(memberInfo.avatar);
+        currentMemberIdRef.current = String(memberInfo.id);
+        setCurrentMemberId(String(memberInfo.id));
 
         //初次进入界面，获取全量聊天记录   TODO 增量拉取聊天记录待优化
 
         //初始化私聊消息表
-        DatabaseHelper.executeQuery("CREATE TABLE IF NOT EXISTS " + CommonConstant.IM_PRIVATE_CHAT_TABLE + " (id INTEGER PRIMARY KEY AUTOINCREMENT, content_id INTEGER UNIQUE, owner_member_id INTEGER, from_member_id INTEGER, to_member_id INTEGER, body TEXT);")
+        const tableReady = DatabaseHelper.initializeDatabase(CommonConstant.IM_DB_NAME)
+          .then(() => DatabaseHelper.executeQuery(privateChatTableSql))
           .then(() => {
             console.log('Table initialized');
-          })
-          .catch((error) => {
-            console.error('Error initializing Table:', error);
           });
 
         WebSocketUtil.addListener('chatMessage', handleMessage);
         WebSocketUtil.addListener('close', handleClose);
+        WebSocketUtil.addListener('open', handleOpen);
+        WebSocketUtil.connect();
+        if (WebSocketUtil.isConnected()) {
+          ChatWebSocket.login();
+        }
 
         //加载本地数据库消息到UI中
-        const sql = 'SELECT * FROM ' + CommonConstant.IM_PRIVATE_CHAT_TABLE + ' where owner_member_id = ' + params.memberId + ' order by id desc';
-        DatabaseHelper.executeSQL(sql)
+        const sql = 'SELECT * FROM ' + CommonConstant.IM_PRIVATE_CHAT_TABLE + ' where owner_member_id = ? order by id desc';
+        tableReady.then(() => DatabaseHelper.executeSQL(sql, [String(params.memberId)]))
           .then((data) => {
             var messageList: IMessage[] = [];
             data.forEach(e => {
               const obj = JSON.parse(e.body);
-              
+
               var newMessage: IMessage = {
                 _id: uuid.v4().toString(),
                 text: obj.data.body,
@@ -77,8 +107,18 @@ export default function ChatPage() {
 
     });
 
+    return () => {
+      WebSocketUtil.removeListener(handleMessage);
+      WebSocketUtil.removeListener(handleClose);
+      WebSocketUtil.removeListener(handleOpen);
+    };
+
 
   }, []);
+
+  const handleOpen = () => {
+    ChatWebSocket.login();
+  }
 
   const handleClose = () => {
     WebSocketUtil.connect();
@@ -89,6 +129,18 @@ export default function ChatPage() {
     console.log("ChatPage 接收到的消息:", chat);
 
     if (chat.command === command.MessageCommand.PRIVATE_CHAT) {
+      if (getCounterpartMemberId(chat, currentMemberIdRef.current) !== String(params.memberId)) {
+        return;
+      }
+
+      savePrivateChatMessage(chat, message, currentMemberIdRef.current)
+        .then(() => {
+          console.log('record add success');
+        })
+        .catch((error) => {
+          console.error('record add fail:', error);
+        });
+
       //接收到其他人发送过来的消息，添加到message中
       var newMessage = {
         _id: uuid.v4().toString(),
@@ -96,7 +148,7 @@ export default function ChatPage() {
         createdAt: new Date(chat.sendAt),
         user: {
           _id: chat.data.fromMemberId,
-          avatar: params.avatar,
+          avatar: String(chat.data.fromMemberId) === currentMemberIdRef.current ? avatar : params.avatar,
         },
       };
 
@@ -107,6 +159,17 @@ export default function ChatPage() {
 
     //接收到自己发送消息的ack，将ack消息存到数据库中
     if(chat.command === command.MessageCommand.PRIVATE_CHAT_ACK) {
+      if (getCounterpartMemberId(chat, currentMemberIdRef.current) !== String(params.memberId)) {
+        return;
+      }
+
+      savePrivateChatMessage(chat, message, currentMemberIdRef.current)
+        .then(() => {
+          console.log('record add success');
+        })
+        .catch((error) => {
+          console.error('record add fail:', error);
+        });
       return;
     }
 
@@ -184,7 +247,7 @@ export default function ChatPage() {
       </View>
     );
   }
-  
+
 
   const renderTime = () => null;
 
@@ -208,7 +271,7 @@ export default function ChatPage() {
         renderUsername={renderTime}
         renderInputToolbar={renderInputToolbar}
         user={{
-          _id: 4,
+          _id: currentMemberId || '0',
           avatar: avatar,
         }}
         alignTop={true}

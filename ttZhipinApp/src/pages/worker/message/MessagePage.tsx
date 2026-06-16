@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View, Dimensions, Image } from 'react-native'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useLocalStore, observer } from 'mobx-react';
 import Feather from 'react-native-vector-icons/Feather';
 import AntDesign from 'react-native-vector-icons/AntDesign';
@@ -22,6 +22,17 @@ import StorageUtil from '../../../utils/StorageUtil';
 
 const {width:SCREEN_WIDTH} = Dimensions.get('window');
 
+const privateChatTableSql = "CREATE TABLE IF NOT EXISTS " + CommonConstant.IM_PRIVATE_CHAT_TABLE + " (id INTEGER PRIMARY KEY AUTOINCREMENT, content_id TEXT UNIQUE, owner_member_id TEXT, from_member_id TEXT, to_member_id TEXT, body TEXT);";
+const insertPrivateChatSql = "INSERT OR IGNORE INTO " + CommonConstant.IM_PRIVATE_CHAT_TABLE + " (content_id, owner_member_id, from_member_id, to_member_id, body) VALUES (?, ?, ?, ?, ?)";
+
+const getCounterpartMemberId = (chat: PrivateChatMessage, currentMemberId?: string) => {
+  const fromMemberId = String(chat.data.fromMemberId);
+  const toMemberId = String(chat.data.toMemberId);
+  if (currentMemberId) {
+    return fromMemberId === currentMemberId ? toMemberId : fromMemberId;
+  }
+  return chat.command === command.MessageCommand.PRIVATE_CHAT_ACK ? toMemberId : fromMemberId;
+};
 
 export default observer(() => {
   const insets = useSafeAreaInsets();
@@ -31,55 +42,58 @@ export default observer(() => {
   const store = useLocalStore(() => new MessageStore());
 
   const [index, setIndex] = useState<number>(0);
+  const currentMemberIdRef = useRef<string>('');
 
   useEffect(() => {
-    WebSocketUtil.connect();
     WebSocketUtil.addListener('message', handleMessage);
     WebSocketUtil.addListener('open', handleOpen);
-    
+    WebSocketUtil.connect();
+    if (WebSocketUtil.isConnected()) {
+      ChatWebSocket.login();
+    }
+
     store.requestTalkList();
 
-    DatabaseHelper.initializeDatabase(CommonConstant.IM_DB_NAME)
+    StorageUtil.getItem(CommonConstant.MEMBER_INFO).then(data => {
+      if (data !== null) {
+        currentMemberIdRef.current = String(JSON.parse(data).id);
+      }
+    });
+
+    const tableReady = DatabaseHelper.initializeDatabase(CommonConstant.IM_DB_NAME)
     .then(() => {
       console.log('Database initialized');
 
-      DatabaseHelper.executeQuery("CREATE TABLE IF NOT EXISTS " + CommonConstant.IM_PRIVATE_CHAT_TABLE + " (id INTEGER PRIMARY KEY AUTOINCREMENT, content_id INTEGER UNIQUE, owner_member_id INTEGER, from_member_id INTEGER, to_member_id INTEGER, body TEXT);")
-      .then(() => {
-        console.log('Table initialized');
-      })
-      .catch((error) => {
-        console.error('Error initializing Table:', error);
-      });
-
+      return DatabaseHelper.executeQuery(privateChatTableSql);
     })
-    .catch((error) => {
-      console.error('Error initializing database:', error);
+    .then(() => {
+      console.log('Table initialized');
     });
 
     //获取离线消息
 
     StorageUtil.getItem(CommonConstant.OFFLINE_MESSAGE_SEQ).then(res => {
-      var finalRes:number = 0;
+      let finalRes = '0';
       if(res !== null) {
-        finalRes = parseInt(res); 
+        finalRes = res;
       }
 
-      store.requestOfflineMessageList(finalRes + 1, (setList: PrivateChatMessage[]) => {
+      store.requestOfflineMessageList(finalRes, (setList: PrivateChatMessage[]) => {
         console.log("获取到离线消息，需要将离线消息持久化到本地数据库:", setList);
-  
+
         if(setList.length !== 0) {
         //遍历所有离线消息，并持久化到APP本地
         setList.forEach(element => {
-  
+
           try {
             //将消息持久化到本地数据库SQLite中
-            DatabaseHelper.executeQuery("INSERT INTO " + CommonConstant.IM_PRIVATE_CHAT_TABLE + " (content_id, owner_member_id, from_member_id, to_member_id, body) VALUES (?, ?, ?, ?, ?)", [
-              element.data.contentId,
-              element.data.fromMemberId,
-              element.data.fromMemberId,
-              element.data.toMemberId,
+            tableReady.then(() => DatabaseHelper.executeQuery(insertPrivateChatSql, [
+              String(element.data.contentId),
+              getCounterpartMemberId(element, currentMemberIdRef.current),
+              String(element.data.fromMemberId),
+              String(element.data.toMemberId),
               JSON.stringify(element),
-            ])
+            ]))
               .then((res) => {
                 console.log('record add success', res);
               })
@@ -90,16 +104,20 @@ export default observer(() => {
             console.log("error输出:", error);
           }
         });
-        
+
         //记录最后的序列号
         const lastElement = setList[setList.length - 1];
         console.log("这波离线消息最新的序列号", lastElement.data.sequence);
-  
-        StorageUtil.setItem(CommonConstant.OFFLINE_MESSAGE_SEQ, lastElement.data.sequence.toString());
+
+        StorageUtil.setItem(CommonConstant.OFFLINE_MESSAGE_SEQ, String(lastElement.data.sequence));
         }
       });
     });
-    
+
+    return () => {
+      WebSocketUtil.removeListener(handleMessage);
+      WebSocketUtil.removeListener(handleOpen);
+    };
 
   }, []);
 
@@ -113,13 +131,15 @@ export default observer(() => {
 
     if (chat.command === command.MessageCommand.PRIVATE_CHAT) {
       //将消息持久化到本地数据库SQLite中
-      DatabaseHelper.executeQuery("INSERT INTO " + CommonConstant.IM_PRIVATE_CHAT_TABLE + " (content_id, owner_member_id, from_member_id, to_member_id, body) VALUES (?, ?, ?, ?, ?)", [
-        chat.data.contentId,
-        chat.data.fromMemberId,
-        chat.data.fromMemberId,
-        chat.data.toMemberId,
+      DatabaseHelper.initializeDatabase(CommonConstant.IM_DB_NAME)
+        .then(() => DatabaseHelper.executeQuery(privateChatTableSql))
+        .then(() => DatabaseHelper.executeQuery(insertPrivateChatSql, [
+        String(chat.data.contentId),
+        getCounterpartMemberId(chat, currentMemberIdRef.current),
+        String(chat.data.fromMemberId),
+        String(chat.data.toMemberId),
         message,
-      ])
+      ]))
         .then(() => {
           console.log('record add success');
         })
@@ -132,13 +152,15 @@ export default observer(() => {
     //接收到自己发送消息的ack，将ack消息存到数据库中
     if(chat.command === command.MessageCommand.PRIVATE_CHAT_ACK) {
       //将消息持久化到本地数据库SQLite中
-      DatabaseHelper.executeQuery("INSERT INTO " + CommonConstant.IM_PRIVATE_CHAT_TABLE + " (content_id, owner_member_id, from_member_id, to_member_id, body) VALUES (?, ?, ?, ?, ?)", [
-        chat.data.contentId,
-        chat.data.toMemberId,
-        chat.data.fromMemberId,
-        chat.data.toMemberId,
+      DatabaseHelper.initializeDatabase(CommonConstant.IM_DB_NAME)
+        .then(() => DatabaseHelper.executeQuery(privateChatTableSql))
+        .then(() => DatabaseHelper.executeQuery(insertPrivateChatSql, [
+        String(chat.data.contentId),
+        getCounterpartMemberId(chat, currentMemberIdRef.current),
+        String(chat.data.fromMemberId),
+        String(chat.data.toMemberId),
         message,
-      ])
+      ]))
         .then(() => {
           console.log('record add success');
         })
@@ -247,7 +269,7 @@ export default observer(() => {
         messageTip: {
           flexDirection: 'row'
         },
-      
+
 
         fourLineAddress: {
           flexDirection: 'row',
@@ -274,8 +296,8 @@ export default observer(() => {
             //跳转到职位详情页
             navigation.push('ChatPage', {
               memberId: item.fromMemberId,
-              avatar: memberInfo.avatar, 
-              name: memberInfo.name, 
+              avatar: memberInfo.avatar,
+              name: memberInfo.name,
               jobTitle: memberInfo.jobTitle
             });
 
@@ -284,7 +306,7 @@ export default observer(() => {
 
               {/* HR信息与地址信息 */}
               <View style={styles.fourLine}>
-                
+
                 <View style={styles.fourLineHR}>
                   {/* 头像 */}
                   <Image style={styles.fourLineHRAvatar} source={{uri: memberInfo.avatar}}/>
@@ -313,9 +335,9 @@ export default observer(() => {
           </TouchableOpacity>
 
         </>
-  
-        
-  
+
+
+
       );
     }
 
@@ -323,16 +345,16 @@ export default observer(() => {
     return (
       <>
         {/** 主页视频列表 */}
-        <FlowList 
+        <FlowList
           keyExtractor={(item: TalkEntity) => `${item.id}`}
-          contentContainerStyle={styles.container} 
-          style={styles.flatList} 
-          data={store.talkList} 
+          contentContainerStyle={styles.container}
+          style={styles.flatList}
+          data={store.talkList}
           extraData={[store.refreshing]}
-          renderItem={renderItem} 
+          renderItem={renderItem}
           numColumns={1}
           refreshing={store.refreshing}
-          onRefresh={onJobRefresh} 
+          onRefresh={onJobRefresh}
           onEndReachedThreshold={0.2}
           onEndReached={loadData}
           ListFooterComponent={MyFooter}
@@ -360,10 +382,10 @@ export default observer(() => {
 
 
   return (
-    
+
     <View style={styles.root}>
       <View style={[{paddingTop: insets.top, height: insets.top + 75}]}>
-      
+
         {/** 顶部标题栏 */}
         <View style={styles.topTitle}>
 
@@ -389,7 +411,7 @@ export default observer(() => {
 
       {index === 0 ? renderRecommend() : renderNearBy()}
     </View>
-    
+
   );
 
 })
@@ -440,5 +462,5 @@ const styles = StyleSheet.create({
   container: {
     paddingTop: 6
   },
-  
+
 });

@@ -69,6 +69,7 @@ public class GroupChatProcessor {
                 //发送消息给目标用户的所有端
                 sendToMember(groupChatCache);
             });
+            return;
         }
 
         Long sequence = sequenceService.getGroupChatSequenceId(SequenceConstants.GROUP_CHAT_SEQUENCE, groupChatPack.getGroupId());
