@@ -1,0 +1,62 @@
+# Build outputs
+target/
+bin/
+build/
+dist/
+**/dist/
+*.class
+*.jar
+*.war
+*.dll
+*.exe
+*.o
+*.so
+
+# Archives and generated packages
+*.7z
+*.dmg
+*.gz
+*.iso
+*.rar
+*.tar
+*.zip
+
+# Package managers
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# React Native / iOS
+android/build/
+android/app/build/
+ios/Pods/
+ios/build/
+.bundle/
+vendor/bundle/
+**/vendor/bundle/
+ttZhipinApp/vendor/
+
+# IDE and OS files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.settings/
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Logs and caches
+logs/
+*.log
+__pycache__/
+
+# Local deploy secrets
+deploy/config.py
+deploy/__pycache__/
+
+# Keep wrapper jars if they are added later
+!gradle/wrapper/gradle-wrapper.jar
+!.mvn/wrapper/maven-wrapper.jar
