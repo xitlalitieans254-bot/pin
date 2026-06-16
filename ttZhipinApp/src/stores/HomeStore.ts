@@ -10,6 +10,11 @@ const JOB_LIST_API: Record<JobListType, string> = {
     latest: 'latestList',
 };
 
+const DEFAULT_NEARBY_LOCATION = {
+    latitude: 28.195666,
+    longitude: 112.962398,
+};
+
 const parseJsonObject = (value?: any) => {
     if (!value) {
         return {};
@@ -77,6 +82,7 @@ export default class HomeStore {
             const params = {
                 page: this.page,
                 size: SIZE,
+                ...(listType === 'nearby' ? DEFAULT_NEARBY_LOCATION : {}),
             };
 
             const { data } = await ApiService.request(JOB_LIST_API[listType], params);

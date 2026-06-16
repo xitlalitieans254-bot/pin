@@ -1,6 +1,10 @@
 package com.whoiszxl.zhipin.job.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.metadata.TableInfo;
+import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
+import com.baomidou.mybatisplus.core.toolkit.LambdaUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.whoiszxl.zhipin.job.cqrs.query.JobQuery;
 import com.whoiszxl.zhipin.job.cqrs.response.JobResponse;
@@ -9,21 +13,37 @@ import com.whoiszxl.zhipin.job.entity.Job;
 import com.whoiszxl.zhipin.job.mapper.JobMapper;
 import com.whoiszxl.zhipin.job.service.ICompanyService;
 import com.whoiszxl.zhipin.tools.common.entity.response.PageResponse;
+import org.apache.ibatis.builder.MapperBuilderAssistant;
+import org.apache.ibatis.session.Configuration;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class JobServiceImplTest {
+
+    @BeforeAll
+    static void initMybatisPlusLambdaCache() {
+        Configuration configuration = new Configuration();
+        configuration.setMapUnderscoreToCamelCase(true);
+        TableInfoHelper.remove(Job.class);
+        TableInfo tableInfo = TableInfoHelper.initTableInfo(
+                new MapperBuilderAssistant(configuration, JobMapper.class.getName()),
+                Job.class);
+        LambdaUtils.installCache(tableInfo);
+    }
 
     @Mock
     private JobMapper jobMapper;
@@ -82,5 +102,48 @@ class JobServiceImplTest {
 
         assertThat(result.getList()).hasSize(1);
         assertThat(result.getList().get(0).getCompanyResponse().getCompanyAbbrName()).isEqualTo("TT");
+    }
+
+    @Test
+    void recommendListRanksByReplyCountThenFreshness() {
+        JobQuery query = new JobQuery();
+        query.setPage(1);
+        query.setSize(10);
+        IPage<Job> emptyPage = new Page<Job>(1, 10).setRecords(Collections.emptyList());
+        when(jobMapper.selectPage(any(), any())).thenReturn(emptyPage);
+
+        jobService.recommendList(query);
+
+        Wrapper<Job> wrapper = captureJobWrapper();
+        assertThat(wrapper.getSqlSegment())
+                .contains("reply_count")
+                .contains("updated_at")
+                .contains("created_at");
+    }
+
+    @Test
+    void nearbyListRanksByDistanceWhenLocationProvided() {
+        JobQuery query = new JobQuery();
+        query.setPage(1);
+        query.setSize(10);
+        query.setLatitude(new BigDecimal("28.195666"));
+        query.setLongitude(new BigDecimal("112.962398"));
+        IPage<Job> emptyPage = new Page<Job>(1, 10).setRecords(Collections.emptyList());
+        when(jobMapper.selectPage(any(), any())).thenReturn(emptyPage);
+
+        jobService.nearbyList(query);
+
+        Wrapper<Job> wrapper = captureJobWrapper();
+        assertThat(wrapper.getSqlSegment())
+                .contains("latitude")
+                .contains("longitude")
+                .contains("ORDER BY ABS(latitude - 28.195666) + ABS(longitude - 112.962398) ASC");
+    }
+
+    private Wrapper<Job> captureJobWrapper() {
+        @SuppressWarnings("unchecked")
+        org.mockito.ArgumentCaptor<Wrapper<Job>> wrapperCaptor = org.mockito.ArgumentCaptor.forClass(Wrapper.class);
+        verify(jobMapper).selectPage(any(), wrapperCaptor.capture());
+        return wrapperCaptor.getValue();
     }
 }

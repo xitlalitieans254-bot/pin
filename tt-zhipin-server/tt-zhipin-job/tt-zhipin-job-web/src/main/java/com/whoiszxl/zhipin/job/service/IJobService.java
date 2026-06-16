@@ -4,7 +4,6 @@ import com.whoiszxl.zhipin.job.cqrs.query.JobQuery;
 import com.whoiszxl.zhipin.job.cqrs.response.JobResponse;
 import com.whoiszxl.zhipin.job.entity.Job;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.whoiszxl.zhipin.tools.common.entity.PageQuery;
 import com.whoiszxl.zhipin.tools.common.entity.response.PageResponse;
 
 /**
@@ -16,6 +15,20 @@ import com.whoiszxl.zhipin.tools.common.entity.response.PageResponse;
  * @since 2023-08-09
  */
 public interface IJobService extends IService<Job> {
+
+    /**
+     * 获取推荐职位列表
+     * @param query 查询参数
+     * @return 推荐职位列表
+     */
+    PageResponse<JobResponse> recommendList(JobQuery query);
+
+    /**
+     * 获取附近职位列表
+     * @param query 查询参数
+     * @return 附近职位列表
+     */
+    PageResponse<JobResponse> nearbyList(JobQuery query);
 
     /**
      * 获取最新的职位列表

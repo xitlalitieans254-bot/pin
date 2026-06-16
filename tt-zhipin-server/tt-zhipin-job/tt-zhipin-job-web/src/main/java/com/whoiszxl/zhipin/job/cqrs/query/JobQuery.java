@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.springdoc.api.annotations.ParameterObject;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 
 /**
@@ -20,4 +21,10 @@ public class JobQuery extends PageQuery {
 
     @Schema(description = "薪资范围")
     private ArrayList<Integer> salary;
+
+    @Schema(description = "当前经度")
+    private BigDecimal longitude;
+
+    @Schema(description = "当前纬度")
+    private BigDecimal latitude;
 }

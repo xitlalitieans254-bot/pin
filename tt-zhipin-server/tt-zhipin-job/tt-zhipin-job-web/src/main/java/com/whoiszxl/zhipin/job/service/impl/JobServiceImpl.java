@@ -3,8 +3,6 @@ package com.whoiszxl.zhipin.job.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSON;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -17,16 +15,17 @@ import com.whoiszxl.zhipin.job.entity.Job;
 import com.whoiszxl.zhipin.job.mapper.JobMapper;
 import com.whoiszxl.zhipin.job.service.ICompanyService;
 import com.whoiszxl.zhipin.job.service.IJobService;
-import com.whoiszxl.zhipin.tools.common.entity.PageQuery;
 import com.whoiszxl.zhipin.tools.common.entity.response.PageResponse;
 import com.whoiszxl.zhipin.tools.common.utils.LoggerUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -47,8 +46,36 @@ public class JobServiceImpl extends ServiceImpl<JobMapper, Job> implements IJobS
     private final ICompanyService companyService;
 
     @Override
+    public PageResponse<JobResponse> recommendList(JobQuery query) {
+        LoggerUtil.info(log, "JobServiceImpl", "获取首页推荐职位列表", query);
+        return pageJobList(query, wrapper -> wrapper
+                .orderByDesc(Job::getReplyCount)
+                .orderByDesc(Job::getUpdatedAt)
+                .orderByDesc(Job::getCreatedAt));
+    }
+
+    @Override
+    public PageResponse<JobResponse> nearbyList(JobQuery query) {
+        LoggerUtil.info(log, "JobServiceImpl", "获取首页附近职位列表", query);
+        return pageJobList(query, wrapper -> {
+            if (hasValidLocation(query)) {
+                wrapper.isNotNull(Job::getLatitude)
+                        .isNotNull(Job::getLongitude)
+                        .last(buildDistanceOrderSql(query));
+                return;
+            }
+
+            wrapper.orderByDesc(Job::getCreatedAt);
+        });
+    }
+
+    @Override
     public PageResponse<JobResponse> latestList(JobQuery query) {
-        LoggerUtil.info(log, "JobServiceImpl", "获取首页职位推荐列表", query);
+        LoggerUtil.info(log, "JobServiceImpl", "获取首页最新职位列表", query);
+        return pageJobList(query, wrapper -> wrapper.orderByDesc(Job::getCreatedAt));
+    }
+
+    private PageResponse<JobResponse> pageJobList(JobQuery query, Consumer<LambdaQueryWrapper<Job>> wrapperCustomizer) {
         LambdaQueryWrapper<Job> wrapper = Wrappers.<Job>lambdaQuery();
         if(StrUtil.isNotBlank(query.getEducationAttainment())) {
             wrapper.eq(Job::getEducationAttainment, query.getEducationAttainment());
@@ -58,14 +85,18 @@ public class JobServiceImpl extends ServiceImpl<JobMapper, Job> implements IJobS
                 w.lt(Job::getSalaryRangeEnd, query.getSalary().get(1));
             });
         }
-        wrapper.orderByDesc(Job::getCreatedAt);
+        wrapperCustomizer.accept(wrapper);
         query.setSort(null);
         IPage<Job> jobPage = jobMapper.selectPage(query.toPage(), wrapper);
         PageResponse<JobResponse> pageResponse = PageResponse.convert(jobPage, JobResponse.class);
 
-        //填充公司信息
-        if (CollUtil.isEmpty(pageResponse.getList())) {
-            return pageResponse;
+        fillCompanyInfo(pageResponse);
+        return pageResponse;
+    }
+
+    private void fillCompanyInfo(PageResponse<JobResponse> pageResponse) {
+        if (pageResponse == null || CollUtil.isEmpty(pageResponse.getList())) {
+            return;
         }
 
         List<Long> companyIdList = pageResponse.getList().stream()
@@ -74,7 +105,7 @@ public class JobServiceImpl extends ServiceImpl<JobMapper, Job> implements IJobS
                 .distinct()
                 .collect(Collectors.toList());
         if (CollUtil.isEmpty(companyIdList)) {
-            return pageResponse;
+            return;
         }
 
         List<Company> companyList = companyService.listByIds(companyIdList);
@@ -89,7 +120,25 @@ public class JobServiceImpl extends ServiceImpl<JobMapper, Job> implements IJobS
                 job.setCompanyResponse(company);
             }
         });
-        return pageResponse;
+    }
+
+    private boolean hasValidLocation(JobQuery query) {
+        return isBetween(query.getLatitude(), "-90", "90")
+                && isBetween(query.getLongitude(), "-180", "180");
+    }
+
+    private boolean isBetween(BigDecimal value, String min, String max) {
+        if (value == null) {
+            return false;
+        }
+        return value.compareTo(new BigDecimal(min)) >= 0
+                && value.compareTo(new BigDecimal(max)) <= 0;
+    }
+
+    private String buildDistanceOrderSql(JobQuery query) {
+        return "ORDER BY ABS(latitude - " + query.getLatitude().stripTrailingZeros().toPlainString()
+                + ") + ABS(longitude - " + query.getLongitude().stripTrailingZeros().toPlainString()
+                + ") ASC, created_at DESC";
     }
 
     @Override

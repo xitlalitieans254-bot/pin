@@ -36,16 +36,14 @@ public class JobController {
     @Operation(summary = "首页推荐岗位列表", description = "获取推荐的岗位列表")
     @GetMapping("/recommend/list")
     public ResponseResult<PageResponse<JobResponse>> recommendList(@Validated JobQuery query) {
-        //TODO 首页推荐岗位列表
-        PageResponse<JobResponse> pageResponse = jobService.latestList(query);
+        PageResponse<JobResponse> pageResponse = jobService.recommendList(query);
         return ResponseResult.buildSuccess(pageResponse);
     }
 
     @Operation(summary = "首页附近岗位列表", description = "获取附近的岗位列表")
     @GetMapping("/nearby/list")
     public ResponseResult<PageResponse<JobResponse>> nearbyList(@Validated JobQuery query) {
-        //TODO 首页附近岗位列表
-        PageResponse<JobResponse> pageResponse = jobService.latestList(query);
+        PageResponse<JobResponse> pageResponse = jobService.nearbyList(query);
         return ResponseResult.buildSuccess(pageResponse);
     }
 
