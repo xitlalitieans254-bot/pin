@@ -3,6 +3,8 @@ import { METHODS, PARAM_TYPE } from "./methods";
 const apis = {
 
     recommendList: {url: '/job/api/job/recommend/list', method: METHODS.GET}, //获取推荐职位列表
+    nearbyList: {url: '/job/api/job/nearby/list', method: METHODS.GET}, //获取附近职位列表
+    latestList: {url: '/job/api/job/latest/list', method: METHODS.GET}, //获取最新职位列表
     jobDetail: {url: '/job/api/job/', method: METHODS.GET, paramType: PARAM_TYPE.PATH}, //获取职位详情信息，jobId拼接在url之后
 
 

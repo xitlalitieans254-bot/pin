@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -63,12 +64,24 @@ public class JobServiceImpl extends ServiceImpl<JobMapper, Job> implements IJobS
         PageResponse<JobResponse> pageResponse = PageResponse.convert(jobPage, JobResponse.class);
 
         //填充公司信息
-        List<Long> companyIdList = pageResponse.getList().stream().map(JobResponse::getCompanyId).collect(Collectors.toList());
+        if (CollUtil.isEmpty(pageResponse.getList())) {
+            return pageResponse;
+        }
+
+        List<Long> companyIdList = pageResponse.getList().stream()
+                .map(JobResponse::getCompanyId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(companyIdList)) {
+            return pageResponse;
+        }
+
         List<Company> companyList = companyService.listByIds(companyIdList);
         List<CompanyResponse> companyResponseList = BeanUtil.copyToList(companyList, CompanyResponse.class);
 
         Map<Long, CompanyResponse> companyMap = companyResponseList.stream()
-                .collect(Collectors.toMap(CompanyResponse::getId, company -> company));
+                .collect(Collectors.toMap(CompanyResponse::getId, company -> company, (left, right) -> left));
 
         pageResponse.getList().forEach(job -> {
             CompanyResponse company = companyMap.get(job.getCompanyId());
@@ -82,9 +95,15 @@ public class JobServiceImpl extends ServiceImpl<JobMapper, Job> implements IJobS
     @Override
     public JobResponse jobDetail(Long jobId) {
         Job job = jobMapper.selectById(jobId);
+        if (job == null) {
+            return null;
+        }
+
         Company company = companyService.getById(job.getCompanyId());
         JobResponse jobResponse = BeanUtil.copyProperties(job, JobResponse.class);
-        jobResponse.setCompanyResponse(BeanUtil.copyProperties(company, CompanyResponse.class));
+        if (company != null) {
+            jobResponse.setCompanyResponse(BeanUtil.copyProperties(company, CompanyResponse.class));
+        }
         return jobResponse;
     }
 }

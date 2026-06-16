@@ -1,4 +1,4 @@
-import { FlatList, StyleSheet, Text, View, Dimensions, Image, StatusBar, RefreshControl } from 'react-native'
+import { StyleSheet, Text, View, Dimensions, Image } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import HomeStore from '../../../stores/HomeStore';
 import { useLocalStore, observer } from 'mobx-react';
@@ -18,6 +18,52 @@ import { StackNavigationProp } from '@react-navigation/stack';
 
 const {width:SCREEN_WIDTH} = Dimensions.get('window');
 
+type JobListType = 'recommend' | 'nearby' | 'latest';
+
+const JOB_LIST_TYPES: JobListType[] = ['recommend', 'nearby', 'latest'];
+const DEFAULT_MEMBER_INFO = {
+  avatar: 'https://shopzz.oss-cn-guangzhou.aliyuncs.com/other/a1.jpg',
+  name: '招聘者',
+  jobTitle: 'HR',
+};
+
+const safeParseJson = <T,>(value: any, fallback: T): T => {
+  if (!value) {
+    return fallback;
+  }
+
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  try {
+    return JSON.parse(value);
+  } catch (error) {
+    return fallback;
+  }
+};
+
+const getJobTags = (value: any): string[] => {
+  const tags = safeParseJson<any[]>(value, []);
+  return Array.isArray(tags) ? tags.filter(Boolean).map(String) : [];
+};
+
+const formatSalary = (start?: number, end?: number) => {
+  if (!start || !end) {
+    return '薪资面议';
+  }
+  return `${Math.floor(start / 1000)} - ${Math.floor(end / 1000)}K`;
+};
+
+const getDistanceText = (item: JobEntity) => {
+  const latitude = Number(item.latitude);
+  const longitude = Number(item.longitude);
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    return '';
+  }
+  return calculateDistance(28.195666, 112.962398, latitude, longitude);
+};
+
 
 export default observer(() => {
   const insets = useSafeAreaInsets();
@@ -28,30 +74,49 @@ export default observer(() => {
 
   const [index, setIndex] = useState<number>(0);
 
+  const requestJobs = (tabIndex: number = index, reset: boolean = false) => {
+    store.requestJobList(JOB_LIST_TYPES[tabIndex] || 'recommend', reset);
+  };
+
 
 
   useEffect(() => {
-    store.requestLatestTest();
+    requestJobs(0, true);
   }, []);
 
   const onJobRefresh = () => {
-    store.resetPage();
-    store.requestLatestTest();
+    requestJobs(index, true);
   };
 
   const loadData = () => {
-    store.requestLatestTest();
+    requestJobs(index);
   };
 
   const MyFooter = () => {
+    if (store.refreshing) {
+      return (
+        <Text style={styles.footerText}>加载中...</Text>
+      );
+    }
+
+    if (store.jobList.length === 0) {
+      return null;
+    }
+
     return (
-      <Text style={{
-        textAlign: 'center',
-        color: '#999',
-        width: '100%',
-        padding: 10,
-        paddingBottom: 20
-      }}>已经滑到底部了</Text>
+      <Text style={styles.footerText}>{store.hasMore ? '上拉加载更多' : '已经滑到底部了'}</Text>
+    );
+  };
+
+  const EmptyList = () => {
+    if (store.refreshing) {
+      return null;
+    }
+
+    return (
+      <View style={styles.emptyState}>
+        <Text style={styles.emptyStateText}>{store.errorMessage || '暂无职位'}</Text>
+      </View>
     );
   };
 
@@ -59,7 +124,10 @@ export default observer(() => {
 
     //首页职位item UI
     const renderItem = ({item, index}: {item:JobEntity, index:number}) => {
-      const memberInfo = JSON.parse(item.memberInfo);
+      const memberInfo = safeParseJson(item.memberInfo, DEFAULT_MEMBER_INFO);
+      const jobTags = getJobTags(item.jobTags);
+      const company = item.companyResponse || ({} as JobEntity['companyResponse']);
+      const distanceText = getDistanceText(item);
       const styles = StyleSheet.create({
         root: {
           backgroundColor: 'white',
@@ -190,20 +258,20 @@ export default observer(() => {
 
               {/* 职位名与薪资范围 */}
               <View style={styles.oneLine}>
-                <Text style={styles.oneLineJobName}>{item.jobName}</Text>
-                <Text style={styles.oneLineJobSalary}>{Math.floor(item.salaryRangeStart / 1000)} - {Math.floor(item.salaryRangeEnd / 1000)}K</Text>
+                <Text style={styles.oneLineJobName}>{item.jobName || '职位名称待完善'}</Text>
+                <Text style={styles.oneLineJobSalary}>{formatSalary(item.salaryRangeStart, item.salaryRangeEnd)}</Text>
               </View>
 
               {/* 公司信息 */}
               <View style={styles.twoLine}>
-                <Text style={styles.twoLineText}>{item.companyResponse.companyAbbrName} </Text>
-                <Text style={styles.twoLineText}>{item.companyResponse.financingStage} </Text>
-                <Text style={styles.twoLineText}>{item.companyResponse.companyScale} </Text>
+                <Text style={styles.twoLineText}>{company.companyAbbrName || '公司待完善'} </Text>
+                <Text style={styles.twoLineText}>{company.financingStage || ''} </Text>
+                <Text style={styles.twoLineText}>{company.companyScale || ''} </Text>
               </View>
 
               {/* 岗位标签 */}
               <View style={styles.threeLine}>
-                {JSON.parse(item.jobTags).map((tag:any, index:number) => (
+                {jobTags.map((tag:any, index:number) => (
                   <View key={index} style={styles.threeLineTag}>
                     <Text style={styles.threeLineTagText}>{tag}</Text>
                   </View>
@@ -215,19 +283,19 @@ export default observer(() => {
                 
                 <View style={styles.fourLineHR}>
                   {/* 头像 */}
-                  <Image style={styles.fourLineHRAvatar} source={{uri: memberInfo.avatar}}/>
+                  <Image style={styles.fourLineHRAvatar} source={{uri: memberInfo.avatar || DEFAULT_MEMBER_INFO.avatar}}/>
 
                   <View style={{flexDirection: 'column'}}>
                     {/* HR信息 */}
-                    <Text style={styles.fourLineHRText}>{memberInfo.name + " · " + memberInfo.jobTitle}</Text>
+                    <Text style={styles.fourLineHRText}>{(memberInfo.name || DEFAULT_MEMBER_INFO.name) + " · " + (memberInfo.jobTitle || DEFAULT_MEMBER_INFO.jobTitle)}</Text>
                     <Text style={styles.fourLineHRReplyText}>3分钟前回复</Text>
                   </View>
 
                 </View>
 
                 <View style={styles.fourLineAddress}>
-                  <Text style={styles.fourLineAddressDistance}>{calculateDistance(28.195666, 112.962398, item.latitude, item.longitude)}</Text>
-                  <Text style={styles.fourLineAddressInfo}>{item.district + " " + item.addressDetail}</Text>
+                  <Text style={styles.fourLineAddressDistance}>{distanceText}</Text>
+                  <Text style={styles.fourLineAddressInfo}>{[item.district, item.addressDetail].filter(Boolean).join(' ')}</Text>
                 </View>
               </View>
 
@@ -250,36 +318,19 @@ export default observer(() => {
           contentContainerStyle={styles.container} 
           style={styles.flatList} 
           data={store.jobList} 
-          extraData={[store.refreshing]}
+          extraData={[store.refreshing, store.hasMore, store.currentListType]}
           renderItem={renderItem} 
           numColumns={1}
           refreshing={store.refreshing}
           onRefresh={onJobRefresh} 
           onEndReachedThreshold={0.2}
           onEndReached={loadData}
+          ListEmptyComponent={EmptyList}
           ListFooterComponent={MyFooter}
         />
       </>
     );
   }
-
-  const renderNearBy = () => {
-    return (
-      <View style={{alignContent: 'center', alignItems: 'center', flex: 1, flexDirection: 'row'}}>
-        <Text>附近列表</Text>
-      </View>
-    );
-  }
-
-  const renderLatest = () => {
-    return (
-      <View style={{alignContent: 'center', alignItems: 'center', flex: 1, flexDirection: 'row'}}>
-        <Text>最新列表</Text>
-      </View>
-    );
-  }
-
-
 
   return (
     
@@ -305,11 +356,14 @@ export default observer(() => {
         </View>
 
 
-      <TitleBar tab={0} onAddButtonPress={(event: GestureResponderEvent) => {
-        }} onTabChanged={(tab: number) => { setIndex(tab); }}/>
+      <TitleBar tab={index} onAddButtonPress={(event: GestureResponderEvent) => {
+        }} onTabChanged={(tab: number) => {
+          setIndex(tab);
+          requestJobs(tab, true);
+        }}/>
       </View>
 
-      {index === 0 ? renderRecommend() : (index === 1 ? renderNearBy() : renderLatest())}
+      {renderRecommend()}
     </View>
     
   );
@@ -361,6 +415,26 @@ const styles = StyleSheet.create({
 
   container: {
     paddingTop: 6
+  },
+
+  footerText: {
+    textAlign: 'center',
+    color: '#999',
+    width: '100%',
+    padding: 10,
+    paddingBottom: 20
+  },
+
+  emptyState: {
+    flex: 1,
+    minHeight: 240,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+
+  emptyStateText: {
+    color: CommonColor.normalGrey,
+    fontSize: 13
   },
   
 });

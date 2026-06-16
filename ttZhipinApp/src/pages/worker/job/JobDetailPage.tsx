@@ -11,7 +11,41 @@ import DetailTitleBar from './components/DetailTitleBar';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const DEFAULT_MEMBER_INFO = {
+  avatar: 'https://shopzz.oss-cn-guangzhou.aliyuncs.com/other/a1.jpg',
+  name: '招聘者',
+  jobTitle: 'HR',
+};
+
+const DEFAULT_COMPANY_LOGO = 'https://shopzz.oss-cn-guangzhou.aliyuncs.com/other/a1.jpg';
+
+const safeParseJson = <T,>(value: any, fallback: T): T => {
+  if (!value) {
+    return fallback;
+  }
+
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  try {
+    return JSON.parse(value);
+  } catch (error) {
+    return fallback;
+  }
+};
+
+const getJobTags = (value: any): string[] => {
+  const tags = safeParseJson<any[]>(value, []);
+  return Array.isArray(tags) ? tags.filter(Boolean).map(String) : [];
+};
+
+const compactText = (values: any[], separator = '·') => {
+  return values
+    .filter(value => value !== undefined && value !== null && `${value}`.trim())
+    .map(value => `${value}`.trim())
+    .join(separator);
+};
 
 export default observer(() => {
 
@@ -24,8 +58,6 @@ export default observer(() => {
 
   const store = useLocalStore(() => new HomeStore());
 
-  const [index, setIndex] = useState<number>(0);
-
   const { params } = useRoute<any>();
 
 
@@ -33,6 +65,7 @@ export default observer(() => {
   const [memberInfo, setMemberInfo] = useState<string>();
 
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
 
 
 
@@ -53,18 +86,18 @@ export default observer(() => {
     loadData();
   }, []);
 
-  const onJobRefresh = () => {
-    store.resetPage();
-    store.requestLatestTest();
-  };
-
   const loadData = () => {
+    setLoadFailed(false);
     store.requestDetail2(params.id, (data) => {
       if (data) {
         setJobEntity(data);
         setMemberInfo(data.memberInfo);
-        setLongText(data.jobDescription);
+        setLongText(data.jobDescription || '');
         setDataLoaded(true);
+        setLoadFailed(false);
+      } else {
+        setDataLoaded(false);
+        setLoadFailed(true);
       }
     });
   };
@@ -175,7 +208,7 @@ export default observer(() => {
         color: CommonColor.deepGrey
       }
     });
-    const parsedMemberInfo = memberInfo ? JSON.parse(memberInfo) : null;
+    const parsedMemberInfo = safeParseJson(memberInfo, DEFAULT_MEMBER_INFO);
 
     return (
 
@@ -185,11 +218,11 @@ export default observer(() => {
 
           <View style={styles.fourLineHR}>
             {/* 头像 */}
-            <Image style={styles.fourLineHRAvatar} source={{ uri: parsedMemberInfo.avatar }} />
+            <Image style={styles.fourLineHRAvatar} source={{ uri: parsedMemberInfo.avatar || DEFAULT_MEMBER_INFO.avatar }} />
 
             <View style={{ flexDirection: 'column' }}>
               {/* HR信息 */}
-              <Text style={styles.fourLineHRText}>{parsedMemberInfo.name + " · " + parsedMemberInfo.jobTitle}</Text>
+              <Text style={styles.fourLineHRText}>{(parsedMemberInfo.name || DEFAULT_MEMBER_INFO.name) + " · " + (parsedMemberInfo.jobTitle || DEFAULT_MEMBER_INFO.jobTitle)}</Text>
               <Text style={styles.fourLineHRReplyText}>3分钟前回复</Text>
             </View>
 
@@ -253,7 +286,7 @@ export default observer(() => {
       }
     });
 
-    const jobTags = jobEntity?.jobTags ? JSON.parse(jobEntity?.jobTags) : null;
+    const jobTags = getJobTags(jobEntity?.jobTags);
     return (
 
       <>
@@ -270,7 +303,7 @@ export default observer(() => {
 
           <View>
             <Text style={styles.descs}>
-              {textToShow}
+              {textToShow || '暂无职位描述'}
               <TouchableOpacity>
                 {longText.length > maxCharsToShow && (
                   <Text style={styles.toggleButton} onPress={toggleShowFullText} >{showFullText ? '收起' : '查看全部'}</Text>
@@ -343,7 +376,8 @@ export default observer(() => {
         color: CommonColor.deepGrey
       }
     });
-    const parsedMemberInfo = memberInfo ? JSON.parse(memberInfo) : null;
+    const company = jobEntity?.companyResponse || ({} as JobEntity['companyResponse']);
+    const companyMeta = compactText([company.financingStage, company.companyScale, company.industry]);
 
     return (
 
@@ -353,19 +387,13 @@ export default observer(() => {
 
           <View style={styles.fourLineHR}>
             {/* 头像 */}
-            <Image style={styles.fourLineHRAvatar} source={{ uri: jobEntity?.companyResponse.companyLogo }} />
+            <Image style={styles.fourLineHRAvatar} source={{ uri: company.companyLogo || DEFAULT_COMPANY_LOGO }} />
 
             <View style={{ flexDirection: 'column' }}>
               {/* HR信息 */}
-              <Text style={styles.fourLineHRText}>{jobEntity?.companyResponse.companyFullName}</Text>
+              <Text style={styles.fourLineHRText}>{company.companyFullName || company.companyAbbrName || '公司信息待完善'}</Text>
               <Text style={styles.fourLineHRReplyText}>
-                {
-                  jobEntity?.companyResponse.financingStage
-                  + "·" +
-                  jobEntity?.companyResponse.companyScale
-                  + "·" +
-                  jobEntity?.companyResponse.industry
-                }
+                {companyMeta || '公司信息待完善'}
 
               </Text>
             </View>
@@ -447,7 +475,9 @@ export default observer(() => {
       <>
         {/* HR信息与地址信息 */}
         <View style={styles.fourLine}>
-          <Image style={{ height: 200, width: '100%', borderRadius: 5 }} resizeMode='cover' source={{ uri: jobEntity?.locationImg }} />
+          {jobEntity?.locationImg ? (
+            <Image style={{ height: 200, width: '100%', borderRadius: 5 }} resizeMode='cover' source={{ uri: jobEntity.locationImg }} />
+          ) : null}
         </View>
       </>
 
@@ -598,7 +628,7 @@ export default observer(() => {
     );
   }
 
-  const parsedMemberInfo = memberInfo ? JSON.parse(memberInfo) : null;
+  const parsedMemberInfo = safeParseJson(memberInfo, DEFAULT_MEMBER_INFO);
 
   return (
 
@@ -688,12 +718,16 @@ export default observer(() => {
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity activeOpacity={1} style={[styles.button, { width: buttonWidth }]} onPress={() => {
-                //跳转到职位详情页
+                if (!jobEntity?.memberId) {
+                  return;
+                }
+
+                //跳转到聊天页
                 navigation.push('ChatPage', {
-                  memberId: store.memberInfo.memberId,
-                  avatar: parsedMemberInfo.avatar, 
-                  name: parsedMemberInfo.name, 
-                  jobTitle: parsedMemberInfo.jobTitle
+                  memberId: jobEntity.memberId,
+                  avatar: parsedMemberInfo.avatar || DEFAULT_MEMBER_INFO.avatar,
+                  name: parsedMemberInfo.name || DEFAULT_MEMBER_INFO.name,
+                  jobTitle: parsedMemberInfo.jobTitle || DEFAULT_MEMBER_INFO.jobTitle
                 });
             }}>
               <Text style={styles.buttonText}>立即沟通</Text>
@@ -701,7 +735,7 @@ export default observer(() => {
           </View>
         </>
       ) : (
-        <Text>加载中</Text>
+        <Text>{loadFailed ? '职位加载失败' : '加载中'}</Text>
       )}
 
     </View>
