@@ -1,12 +1,9 @@
 import { StyleSheet, Text, View, Dimensions, Image } from 'react-native'
 import React, { useEffect, useRef, useState } from 'react'
 import { useLocalStore, observer } from 'mobx-react';
-import Feather from 'react-native-vector-icons/Feather';
-import AntDesign from 'react-native-vector-icons/AntDesign';
 import FlowList from '../../../components/flowlist/FlowList.js';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import TitleBar from './components/TitleBar';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import { GestureResponderEvent } from 'react-native';
 import { CommonColor } from '../../../common/CommonColor';
 import { useNavigation } from '@react-navigation/native';
@@ -18,6 +15,7 @@ import DatabaseHelper from '../../../utils/DatabaseHelper';
 import command from '../../../common/Command';
 import { CommonConstant } from '../../../common/CommonConstant';
 import StorageUtil from '../../../utils/StorageUtil';
+import GradientHeader from '../components/GradientHeader';
 
 
 const {width:SCREEN_WIDTH} = Dimensions.get('window');
@@ -35,8 +33,6 @@ const getCounterpartMemberId = (chat: PrivateChatMessage, currentMemberId?: stri
 };
 
 export default observer(() => {
-  const insets = useSafeAreaInsets();
-
   const navigation = useNavigation<StackNavigationProp<any>>();
 
   const store = useLocalStore(() => new MessageStore());
@@ -384,30 +380,16 @@ export default observer(() => {
   return (
 
     <View style={styles.root}>
-      <View style={[{paddingTop: insets.top, height: insets.top + 75}]}>
-
-        {/** 顶部标题栏 */}
-        <View style={styles.topTitle}>
-
-          {/** 职位类型 */}
-          <Text style={styles.leftText}>聊天</Text>
-
-          {/** 添加按钮和搜索按钮 */}
-          <View style={styles.rightContainer}>
-            <TouchableOpacity activeOpacity={1}>
-              <Feather style={styles.rightIcon} name="bell" />
-            </TouchableOpacity>
-
-            <TouchableOpacity activeOpacity={1}>
-              <AntDesign style={styles.rightIcon} name="setting" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-
-      <TitleBar tab={0} onAddButtonPress={(event: GestureResponderEvent) => {
-        }} onTabChanged={(tab: number) => { setIndex(tab); }}/>
-      </View>
+      <GradientHeader
+        title="消息"
+        actions={[
+          { icon: 'notifications-outline' },
+          { icon: 'settings-outline' },
+        ]}
+      >
+        <TitleBar tab={0} onAddButtonPress={(event: GestureResponderEvent) => {
+          }} onTabChanged={(tab: number) => { setIndex(tab); }}/>
+      </GradientHeader>
 
       {index === 0 ? renderRecommend() : renderNearBy()}
     </View>
@@ -418,45 +400,14 @@ export default observer(() => {
 
 const styles = StyleSheet.create({
   root: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'white',
+    flex: 1,
+    backgroundColor: '#f4f5f7',
   },
 
   flatList: {
     width: '100%',
     height: '100%',
     backgroundColor: CommonColor.normalBg
-  },
-
-  topTitle: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    backgroundColor: 'white'
-  },
-
-  leftText: {
-    flex: 1,
-    textAlign: 'left',
-    fontSize: 25,
-    fontWeight: '500',
-    color: 'black'
-  },
-
-  rightContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-  },
-
-  rightIcon: {
-    fontSize: 18,
-    color: 'black',
-    paddingLeft: 10
   },
 
   container: {

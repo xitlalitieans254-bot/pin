@@ -13,6 +13,9 @@ import { CommonConstant } from "../../common/CommonConstant";
 import { isMemberInfoComplete } from "../../utils/MemberInfoUtil";
 
 
+const RESEND_SECONDS = 60;
+const BRAND_COLOR = '#0aa7a0';
+
 
 //校验短信验证码页面
 export default () => {
@@ -35,30 +38,41 @@ export default () => {
 
 
 
-  const input1Ref = useRef<TextInput | null>(null);
-  const input2Ref = useRef<TextInput | null>(null);
-  const input3Ref = useRef<TextInput | null>(null);
-  const input4Ref = useRef<TextInput | null>(null);
+  const codeInputRef = useRef<TextInput | null>(null);
 
   const [inputValues, setInputValues] = useState<string[]>(['', '', '', '']);
+  const [resendSeconds, setResendSeconds] = useState<number>(RESEND_SECONDS);
   const smsCode = inputValues.join('');
   const canLogin = smsCode.length === 4 && inputValues.every(Boolean) && !submitting;
+  const canResend = resendSeconds === 0 && !resending;
 
   useEffect(() => {
-
-  }, [])
-
-
-
-  const handleTextChange = (text: string, inputIndex: number, nextInputRef: React.RefObject<TextInput | null>) => {
-    const currentText = text.replace(/\D/g, '');
-    const newInputValues = [...inputValues];
-    newInputValues[inputIndex] = currentText.length === 1 ? currentText : '';
-    setInputValues(newInputValues);
-
-    if (currentText.length === 1 && nextInputRef.current) {
-      nextInputRef.current.focus();
+    if (resendSeconds <= 0) {
+      return;
     }
+
+    const timer = setTimeout(() => {
+      setResendSeconds((seconds) => Math.max(seconds - 1, 0));
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [resendSeconds]);
+
+
+
+  const handleCodeTextChange = (text: string) => {
+    const currentText = text.replace(/\D/g, '').slice(0, 4);
+    const nextInputValues = currentText.split('');
+
+    while (nextInputValues.length < 4) {
+      nextInputValues.push('');
+    }
+
+    setInputValues(nextInputValues);
+  };
+
+  const focusCodeInput = () => {
+    codeInputRef.current?.focus();
   };
 
   const onPressByLogin = async () => {
@@ -107,7 +121,7 @@ export default () => {
       return;
     }
 
-    if (resending) {
+    if (resending || resendSeconds > 0) {
       return;
     }
 
@@ -117,8 +131,8 @@ export default () => {
       if (success) {
         setLoginToken(String(MemberStore.loginToken ?? ''));
         setInputValues(['', '', '', '']);
-        input1Ref.current?.focus();
-        Alert.alert('验证码已重新发送');
+        setResendSeconds(RESEND_SECONDS);
+        codeInputRef.current?.focus();
       } else {
         Alert.alert('验证码发送失败', message || '请稍后重试。');
       }
@@ -140,27 +154,36 @@ export default () => {
           <Text style={styles.phoneLoginTitle}>输入短信验证码</Text>
           <Text style={styles.phoneLoginSubTitle}>已经向您的手机 {displayPhone} 发送验证码</Text>
 
-          <View style={styles.smsRoot}>
-            <TextInput ref={input1Ref} style={styles.smsInput} keyboardType="numeric" maxLength={1}
-                onChangeText={(text) => handleTextChange(text, 0, input2Ref)}
+          <TouchableOpacity activeOpacity={1} style={styles.smsRoot} onPress={focusCodeInput}>
+            <TextInput
+              ref={codeInputRef}
+              style={styles.hiddenSmsInput}
+              keyboardType="number-pad"
+              maxLength={4}
+              value={smsCode}
+              autoFocus={true}
+              caretHidden={true}
+              textContentType="oneTimeCode"
+              autoComplete="sms-otp"
+              onChangeText={handleCodeTextChange}
             />
-            <TextInput ref={input2Ref} style={styles.smsInput} keyboardType="numeric" maxLength={1}
-                onChangeText={(text) => handleTextChange(text, 1, input3Ref)}
-            />
-            <TextInput ref={input3Ref} style={styles.smsInput} keyboardType="numeric" maxLength={1}
-                onChangeText={(text) => handleTextChange(text, 2, input4Ref)}
-            />
-            <TextInput ref={input4Ref} style={styles.smsInput} keyboardType="numeric" maxLength={1}
-                onChangeText={(text) => handleTextChange(text, 3, input1Ref)}
-            />
-            </View>
+            {inputValues.map((value, index) => (
+              <View
+                key={`sms_${index}`}
+                style={value ? styles.smsInputFilled : styles.smsInput}
+              >
+                <Text style={styles.smsInputText}>{value}</Text>
+              </View>
+            ))}
+          </TouchableOpacity>
 
           {/** 重新发送按钮 */}
           <View style={commonStyles.protocolLayout}>
 
-            
-            <TouchableOpacity onPress={onPressByResend} activeOpacity={0.7}>
-              <Text style={commonStyles.labelText}>{resending ? '发送中...' : '重新发送'}</Text>
+            <TouchableOpacity onPress={onPressByResend} activeOpacity={canResend ? 0.7 : 1}>
+              <Text style={canResend ? commonStyles.resendTextActive : commonStyles.resendText}>
+                {resending ? '发送中...' : resendSeconds > 0 ? `${resendSeconds}s 后重新发送` : '重新发送'}
+              </Text>
             </TouchableOpacity>
 
           </View>
@@ -304,30 +327,29 @@ const styles = StyleSheet.create({
 
       loginButton: {
         width: '100%',
-        height: 40,
-        backgroundColor: CommonColor.mainColor,
+        height: 48,
+        backgroundColor: BRAND_COLOR,
         justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: 8,
-        marginTop: 10
+        borderRadius: 24,
+        marginTop: 18
       },
 
       unloginButton: {
         width: '100%',
-        height: 40,
-        backgroundColor: 'red',
-        opacity: 0.4,
+        height: 48,
+        backgroundColor: '#dce7e6',
         justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: 8,
-        marginTop: 10
+        borderRadius: 24,
+        marginTop: 18
       },
-      
+
 
       loginText: {
-        fontSize: 13,
+        fontSize: 15,
         color: 'white',
-        fontWeight: 'bold'
+        fontWeight: '700'
       },
 
       thridPartyLoginLayout: {
@@ -377,21 +399,45 @@ const styles = StyleSheet.create({
       },
 
       smsRoot: {
-        paddingTop: 20,
+        width: '100%',
+        paddingTop: 26,
         flexDirection: 'row',
-        justifyContent: 'center',
+        justifyContent: 'space-between',
         alignItems: 'center',
       },
 
+      hiddenSmsInput: {
+        position: 'absolute',
+        width: 1,
+        height: 1,
+        opacity: 0,
+      },
+
       smsInput: {
-        width: 60,
-        height: 60,
-        borderWidth: 0.5,
-        borderColor: CommonColor.normalGrey,
-        textAlign: 'center',
-        fontSize: 25,
-        fontWeight: "bold",
-        marginHorizontal: 5,
+        width: 64,
+        height: 56,
+        borderRadius: 14,
+        backgroundColor: '#f5f7f8',
+        alignItems: 'center',
+        justifyContent: 'center',
+      },
+
+      smsInputFilled: {
+        width: 64,
+        height: 56,
+        borderRadius: 14,
+        backgroundColor: '#e9f7f5',
+        borderWidth: 1,
+        borderColor: BRAND_COLOR,
+        alignItems: 'center',
+        justifyContent: 'center',
+      },
+
+      smsInputText: {
+        color: '#111111',
+        fontSize: 24,
+        lineHeight: 30,
+        fontWeight: '700',
       },
 
 });
@@ -421,6 +467,17 @@ const commonStyles = StyleSheet.create({
     labelText: {
       fontSize: 11,
       color: CommonColor.fontColor,
+    },
+
+    resendText: {
+      fontSize: 12,
+      color: CommonColor.normalGrey,
+    },
+
+    resendTextActive: {
+      fontSize: 12,
+      color: BRAND_COLOR,
+      fontWeight: '600',
     },
 
     protocolText: {

@@ -42,7 +42,7 @@ export default () => {
         <Image style={styles.icon_logo} source={icon_logo}></Image>
 
         {/** 闪屏页文字 */}
-        <Text style={styles.title}>TT直聘</Text>
+        <Text style={styles.title}>AI智聘</Text>
     </View>
   )
 }

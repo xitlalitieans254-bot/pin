@@ -414,7 +414,7 @@ export default () => {
   
             <View style={styles.bottomLoginMethods}>
               <View style={styles.bottomLoginMethodsRoot}>
-                <Text style={styles.bottomLoginTitle}>根据《劳动法》《未成年人保护法》等相关法律规定申请注册TT直聘，请选择与你身份证一致的真实年龄并确保你已年满16周岁。</Text>
+                <Text style={styles.bottomLoginTitle}>根据《劳动法》《未成年人保护法》等相关法律规定申请注册AI智聘，请选择与你身份证一致的真实年龄并确保你已年满16周岁。</Text>
               </View>
             </View>
             
@@ -672,7 +672,7 @@ export default () => {
   
             <View style={styles.bottomLoginMethods}>
               <View style={styles.bottomLoginMethodsRoot}>
-                <Text style={styles.bottomLoginTitle}>根据《劳动法》《未成年人保护法》等相关法律规定申请注册TT直聘，请选择与你身份证一致的真实年龄并确保你已年满16周岁。</Text>
+                <Text style={styles.bottomLoginTitle}>根据《劳动法》《未成年人保护法》等相关法律规定申请注册AI智聘，请选择与你身份证一致的真实年龄并确保你已年满16周岁。</Text>
               </View>
             </View>
             
@@ -896,7 +896,7 @@ export default () => {
   
             <View style={styles.bottomLoginMethods}>
               <View style={styles.bottomLoginMethodsRoot}>
-                <Text style={styles.bottomLoginTitle}>根据《劳动法》《未成年人保护法》等相关法律规定申请注册TT直聘，请选择与你身份证一致的真实年龄并确保你已年满16周岁。</Text>
+                <Text style={styles.bottomLoginTitle}>根据《劳动法》《未成年人保护法》等相关法律规定申请注册AI智聘，请选择与你身份证一致的真实年龄并确保你已年满16周岁。</Text>
               </View>
             </View>
             

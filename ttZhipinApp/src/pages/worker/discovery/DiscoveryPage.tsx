@@ -1,12 +1,30 @@
-import { Text, View } from 'react-native'
-import React, { Component } from 'react'
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
 
-export default class DiscoveryPage extends Component {
-  render() {
-    return (
-      <View>
-        <Text>DiscoveryPage</Text>
-      </View>
-    )
-  }
-}
+import GradientHeader from '../components/GradientHeader';
+
+export default () => {
+  return (
+    <View style={styles.root}>
+      <GradientHeader
+        title="发现"
+        actions={[
+          { icon: 'search-outline' },
+        ]}
+      />
+
+      <View style={styles.content} />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: '#f4f5f7',
+  },
+
+  content: {
+    flex: 1,
+  },
+});

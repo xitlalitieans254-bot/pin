@@ -163,7 +163,7 @@ export default () => {
       oneClickLoginButton: {
         width: '100%',
         height: 50,
-        backgroundColor: 'red',
+        backgroundColor: '#0aa7a0',
         borderRadius: 35,
         justifyContent: 'center',
         alignItems: 'center',
@@ -298,12 +298,13 @@ export default () => {
 
       phoneInputLayout: {
         width: '100%',
-        height: 40,
+        height: 52,
         flexDirection: 'row',
         alignItems: 'center',
-        borderBottomWidth: 0.5,
-        borderBottomColor: '#ddd',
-        marginTop: 15
+        backgroundColor: '#f5f7f8',
+        borderRadius: 14,
+        paddingHorizontal: 14,
+        marginTop: 24
       },
 
       phoneInputPre: {
@@ -318,7 +319,7 @@ export default () => {
 
       phoneInput:{
         flex: 1,
-        height: 50,
+        height: 52,
         backgroundColor: 'transparent',
         textAlign: 'left',
         textAlignVertical: 'center',
@@ -378,30 +379,29 @@ export default () => {
 
       loginButton: {
         width: '100%',
-        height: 40,
-        backgroundColor: CommonColor.mainColor,
+        height: 48,
+        backgroundColor: '#0aa7a0',
         justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: 8,
-        marginTop: 10
+        borderRadius: 24,
+        marginTop: 18
       },
 
       unloginButton: {
         width: '100%',
-        height: 40,
-        backgroundColor: 'red',
-        opacity: 0.4,
+        height: 48,
+        backgroundColor: '#dce7e6',
         justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: 8,
-        marginTop: 10
+        borderRadius: 24,
+        marginTop: 18
       },
-      
+
 
       loginText: {
-        fontSize: 13,
+        fontSize: 15,
         color: 'white',
-        fontWeight: 'bold'
+        fontWeight: '700'
       },
 
       thridPartyLoginLayout: {
@@ -459,7 +459,7 @@ export default () => {
           
           {/** 密码登录提示 */}
           <Text style={styles.phoneLoginTitle}>手机号登录/注册</Text>
-          <Text style={styles.phoneLoginSubTitle}>首次验证通过即注册TT直聘账号</Text>
+          <Text style={styles.phoneLoginSubTitle}>首次验证通过即注册AI智聘账号</Text>
 
 
           {/** 登录手机号表单 */}
@@ -485,9 +485,9 @@ export default () => {
 
             <Text style={commonStyles.labelText}>已阅读并同意</Text>
             <TouchableOpacity onPress={() => {
-              Linking.openURL('https://www.github.com/whoiszxl/tt-zhipin');
+              Linking.openURL('https://github.com/xitlalitieans254-bot/pin');
             }}>
-              <Text style={commonStyles.protocolText}>《TT直聘用户协议》和《隐私政策》</Text>
+              <Text style={commonStyles.protocolText}>《AI智聘用户协议》和《隐私政策》</Text>
             </TouchableOpacity>
 
           </View>

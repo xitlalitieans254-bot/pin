@@ -202,6 +202,7 @@ export default class FlowList extends React.PureComponent {
             onEndReached && onEndReached(info)
           }
         }}
+        refreshing={!!this.props.refreshing}
         numColumns={1}
         data={this._dataSource}
         keyExtractor={(item, index) => `row_${index}`}

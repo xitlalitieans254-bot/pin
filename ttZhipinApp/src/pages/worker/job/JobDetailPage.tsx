@@ -511,10 +511,10 @@ export default observer(() => {
         alignContent: 'center'
       },
 
-      lineLabel: { 
-        flexDirection: 'row', 
-        justifyContent: 'center', 
-        width: '25%' 
+      lineLabel: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        width: '25%'
       },
 
       lineLabelText: {
@@ -591,10 +591,10 @@ export default observer(() => {
         alignContent: 'center'
       },
 
-      lineLabel: { 
-        flexDirection: 'row', 
-        justifyContent: 'center', 
-        width: '25%' 
+      lineLabel: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        width: '25%'
       },
 
       lineLabelText: {
@@ -610,12 +610,12 @@ export default observer(() => {
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <AntDesign name="Safety" color={CommonColor.mainColor} size={16}/>
 
-              <Text style={{ color: CommonColor.fontColor, fontSize: 14, fontWeight: 'bold', paddingLeft: 4 }}>TT安全提示</Text>
+              <Text style={{ color: CommonColor.fontColor, fontSize: 14, fontWeight: 'bold', paddingLeft: 4 }}>AI智聘安全提示</Text>
             </View>
           </View>
 
           <Text style={{ fontSize: 12, color: CommonColor.deepGrey }}>
-          TT直聘严禁用人单位和招聘者用户做出任何损害求职者合法权益的违法违规行为，包括但不限于扣押求职者证件、收取求职者财物、向求职者集资、让求职者入股、诱导求职者异地入职、异地参加培训、违法违规使用求职者简历等，您一旦发现此类行为，请立即举报。
+          AI智聘严禁用人单位和招聘者用户做出任何损害求职者合法权益的违法违规行为，包括但不限于扣押求职者证件、收取求职者财物、向求职者集资、让求职者入股、诱导求职者异地入职、异地参加培训、违法违规使用求职者简历等，您一旦发现此类行为，请立即举报。
           </Text>
 
           <Text style={{ fontSize: 12, color: CommonColor.mainColor }}>

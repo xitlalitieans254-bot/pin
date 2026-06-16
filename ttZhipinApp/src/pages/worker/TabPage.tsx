@@ -6,20 +6,28 @@ import { launchImageLibrary, ImagePickerResponse } from "react-native-image-pick
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import JobPage from "./job/JobPage";
 import DiscoveryPage from "./discovery/DiscoveryPage";
 import MessagePage from "./message/MessagePage";
 import MinePage from "./mine/MinePage";
 
-import { CommonColor } from "../../common/CommonColor";
-
 
 const Tab = createBottomTabNavigator();
+const ACTIVE_COLOR = '#0aa7a0';
+
+const tabIcons = [
+    { active: 'briefcase', inactive: 'briefcase-outline' },
+    { active: 'book', inactive: 'book-outline' },
+    { active: 'chatbubble-ellipses', inactive: 'chatbubble-ellipses-outline' },
+    { active: 'person-circle', inactive: 'person-circle-outline' },
+];
 
 export default () => {
 
     const navigation = useNavigation<StackNavigationProp<any>>();
+    const insets = useSafeAreaInsets();
 
     const [process, setProcess] = useState(0);
 
@@ -57,27 +65,28 @@ export default () => {
 
 
         return (
-            <View style={styles.myTabBar}>
+            <View style={[styles.myTabBar, {height: 54 + insets.bottom, paddingBottom: Math.max(insets.bottom, 5)}]}>
                 {routes.map((route: any, i: number) => {
                     const {options} = descriptors[route.key];
                     const label = options.title;
                     const isFocused = index === i;
+                    const icon = tabIcons[i] || tabIcons[0];
+                    const iconName = isFocused ? icon.active : icon.inactive;
 
                     return (
-            
+
                         <TouchableOpacity activeOpacity={1} key={label} style={styles.myTabItem} onPress={() => {
                             if(!isFocused) {
                                 navigation.navigate(route.name);
                             }
-                            
+
                         }}>
 
-                            {i === 0 ? <Ionicons style={isFocused ? styles.focusedIcon : styles.unFocusedIcon} name="cube" size={18} color="black"/> : (
-                                i === 1 ? <Ionicons style={isFocused ? styles.focusedIcon : styles.unFocusedIcon} name="compass" size={18} color="black"/> : (
-                                    i === 2 ? <Ionicons style={isFocused ? styles.focusedIcon : styles.unFocusedIcon} name="chatbox-ellipses" size={18} color="black"/> : 
-                                    <Ionicons style={isFocused ? styles.focusedIcon : styles.unFocusedIcon} name="logo-octocat" size={18} color={CommonColor.mainColor}/>
-                                )
-                            )}
+                            <Ionicons
+                                style={isFocused ? styles.focusedIcon : styles.unFocusedIcon}
+                                name={iconName}
+                                size={isFocused ? 21 : 20}
+                            />
 
                             <Text style={isFocused ? styles.focusedText : styles.unFocusedText}>{label}</Text>
                         </TouchableOpacity>
@@ -88,7 +97,7 @@ export default () => {
     }
 
     return (
-        
+
         <View style={styles.root}>
             <StatusBar translucent backgroundColor={'transparent'} />
 
@@ -125,16 +134,16 @@ const styles = StyleSheet.create({
 
     myTabBar: {
         width: '100%',
-        height: 52,
         flexDirection: 'row',
-        alignItems: "center",
+        alignItems: "flex-start",
         backgroundColor: "white",
         borderTopWidth: 0.5,
-        borderTopColor: CommonColor.tagBg
+        borderTopColor: '#eef0f3',
+        paddingTop: 4,
     },
 
     myTabItem: {
-        height: '100%',
+        height: 43,
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center'
@@ -166,22 +175,24 @@ const styles = StyleSheet.create({
 
     focusedText: {
         fontSize: 10,
-        color: CommonColor.mainColor,
-        fontWeight: 'bold'
+        color: ACTIVE_COLOR,
+        fontWeight: '700',
+        marginTop: 3,
     },
 
     unFocusedText: {
         fontSize: 10,
-        color: 'grey',
-        fontWeight: 'normal'
+        color: '#8f9399',
+        fontWeight: '500',
+        marginTop: 3,
     },
 
     focusedIcon: {
-        color: CommonColor.mainColor,
+        color: ACTIVE_COLOR,
     },
 
     unFocusedIcon: {
-        color: 'grey',
+        color: '#9da1a7',
     },
-    
+
 });
