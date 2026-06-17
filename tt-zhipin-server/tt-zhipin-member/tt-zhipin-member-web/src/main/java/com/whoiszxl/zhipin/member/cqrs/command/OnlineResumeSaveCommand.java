@@ -13,6 +13,9 @@ import java.util.List;
 @Schema(description = "在线简历保存命令")
 public class OnlineResumeSaveCommand {
 
+    @Schema(description = "个人优势")
+    private String advantage;
+
     @Schema(description = "求职期望列表")
     private List<WorkExpectDto> workExpectDtoList;
 

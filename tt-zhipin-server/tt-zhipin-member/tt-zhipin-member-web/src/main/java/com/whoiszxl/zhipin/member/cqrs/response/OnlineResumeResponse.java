@@ -7,6 +7,7 @@ import com.whoiszxl.zhipin.member.cqrs.dto.WorkExperienceDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.util.Collections;
 import java.util.List;
 
 @Data
@@ -17,21 +18,21 @@ public class OnlineResumeResponse {
     private MemberInfoResponse memberInfoResponse;
 
     @Schema(description = "求职期望列表")
-    private List<WorkExpectDto> workExpectDtoList;
+    private List<WorkExpectDto> workExpectDtoList = Collections.emptyList();
 
     @Schema(description = "工作经历列表")
-    private List<WorkExperienceDto> workExperienceDtoList;
+    private List<WorkExperienceDto> workExperienceDtoList = Collections.emptyList();
 
     @Schema(description = "项目经历列表")
-    private List<ProjectExperienceDto> projectExperienceDtoList;
+    private List<ProjectExperienceDto> projectExperienceDtoList = Collections.emptyList();
 
     @Schema(description = "教育经历列表")
-    private List<EduExperienceDto> eduExperienceDtoList;
+    private List<EduExperienceDto> eduExperienceDtoList = Collections.emptyList();
 
     @Schema(description = "资格证书列表")
-    private List<String> qualificationList;
+    private List<String> qualificationList = Collections.emptyList();
 
     @Schema(description = "个人优势")
-    private String advantage;
+    private String advantage = "";
 
 }

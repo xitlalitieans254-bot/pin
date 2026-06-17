@@ -1,10 +1,7 @@
 package com.whoiszxl.zhipin.member.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.lang.Assert;
 import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.whoiszxl.zhipin.member.cqrs.command.OnlineResumeSaveCommand;
 import com.whoiszxl.zhipin.member.cqrs.dto.EduExperienceDto;
@@ -41,10 +38,13 @@ public class OnlineResumeServiceImpl implements IOnlineResumeService {
         Member member = memberService.getById(appMemberId);
         MemberExp memberExp = memberExpService.getOne(Wrappers.<MemberExp>lambdaQuery()
                 .eq(MemberExp::getMemberId, appMemberId));
-        Assert.isTrue(memberExp != null, "用户信息不存在");
 
         OnlineResumeResponse response = new OnlineResumeResponse();
         response.setMemberInfoResponse(BeanUtil.copyProperties(member, MemberInfoResponse.class));
+
+        if(memberExp == null) {
+            return response;
+        }
 
         if(StringUtils.isNotBlank(memberExp.getWorkExpect())) {
             List<WorkExpectDto> workExpects = JSONUtil.toList(memberExp.getWorkExpect(), WorkExpectDto.class);
@@ -71,7 +71,7 @@ public class OnlineResumeServiceImpl implements IOnlineResumeService {
             response.setQualificationList(qualificationList);
         }
 
-        response.setAdvantage(memberExp.getAdvantage());
+        response.setAdvantage(StringUtils.defaultString(memberExp.getAdvantage()));
 
         return response;
     }
@@ -82,22 +82,25 @@ public class OnlineResumeServiceImpl implements IOnlineResumeService {
         MemberExp updateMemberExp = new MemberExp();
         updateMemberExp.setMemberId(appMemberId);
 
-        if(CollUtil.isNotEmpty(saveCommand.getWorkExpectDtoList())) {
+        if(saveCommand.getAdvantage() != null) {
+            updateMemberExp.setAdvantage(saveCommand.getAdvantage());
+        }
+        if(saveCommand.getWorkExpectDtoList() != null) {
             updateMemberExp.setWorkExpect(JSONUtil.toJsonStr(saveCommand.getWorkExpectDtoList()));
         }
-        if(CollUtil.isNotEmpty(saveCommand.getWorkExperienceDtoList())) {
+        if(saveCommand.getWorkExperienceDtoList() != null) {
             updateMemberExp.setWorkExperience(JSONUtil.toJsonStr(saveCommand.getWorkExperienceDtoList()));
         }
-        if(CollUtil.isNotEmpty(saveCommand.getProjectExperienceDtoList())) {
+        if(saveCommand.getProjectExperienceDtoList() != null) {
             updateMemberExp.setProjectExperience(JSONUtil.toJsonStr(saveCommand.getProjectExperienceDtoList()));
         }
-        if(CollUtil.isNotEmpty(saveCommand.getEduExperienceDtoList())) {
+        if(saveCommand.getEduExperienceDtoList() != null) {
             updateMemberExp.setEduExperience(JSONUtil.toJsonStr(saveCommand.getEduExperienceDtoList()));
         }
-
-        if(CollUtil.isNotEmpty(saveCommand.getQualificationList())) {
+        if(saveCommand.getQualificationList() != null) {
             updateMemberExp.setQualification(JSONUtil.toJsonStr(saveCommand.getQualificationList()));
         }
+
         MemberExp currentMemberExp = memberExpService.getOne(Wrappers.<MemberExp>lambdaQuery()
                 .eq(MemberExp::getMemberId, appMemberId));
 
@@ -109,4 +112,3 @@ public class OnlineResumeServiceImpl implements IOnlineResumeService {
                 .eq(MemberExp::getMemberId, appMemberId));
     }
 }
-
