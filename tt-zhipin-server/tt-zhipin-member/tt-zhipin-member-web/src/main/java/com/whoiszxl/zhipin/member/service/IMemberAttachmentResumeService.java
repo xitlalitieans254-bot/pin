@@ -1,8 +1,11 @@
 package com.whoiszxl.zhipin.member.service;
 
 import com.whoiszxl.zhipin.member.cqrs.command.AttachmentResumeSaveCommand;
+import com.whoiszxl.zhipin.member.cqrs.command.ResumeNameUpdateCommand;
 import com.whoiszxl.zhipin.member.entity.MemberAttachmentResume;
 import com.baomidou.mybatisplus.extension.service.IService;
+
+import java.util.List;
 
 /**
  * <p>
@@ -20,4 +23,10 @@ public interface IMemberAttachmentResumeService extends IService<MemberAttachmen
      * @return
      */
     Boolean saveResume(AttachmentResumeSaveCommand saveCommand);
+
+    List<MemberAttachmentResume> listCurrentMemberResumes();
+
+    Boolean deleteResume(String id);
+
+    Boolean updateResumeName(ResumeNameUpdateCommand updateCommand);
 }
