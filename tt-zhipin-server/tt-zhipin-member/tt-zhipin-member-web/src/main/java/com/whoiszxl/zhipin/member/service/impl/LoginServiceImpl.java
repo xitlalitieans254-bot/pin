@@ -55,6 +55,18 @@ public class LoginServiceImpl implements ILoginService {
     @Value("${zhipin.sms.template-code}")
     private String templateCode;
 
+    @Value("${zhipin.test-login.enabled:true}")
+    private boolean testLoginEnabled;
+
+    @Value("${zhipin.test-login.phone:12345678911}")
+    private String testLoginPhone;
+
+    @Value("${zhipin.test-login.sms-code:1234}")
+    private String testLoginSmsCode;
+
+    @Value("${zhipin.test-login.uuid:test-login-uuid}")
+    private String testLoginUuid;
+
     private final RedisUtils redisUtils;
 
     private final IMemberService memberService;
@@ -89,6 +101,10 @@ public class LoginServiceImpl implements ILoginService {
 
     @Override
     public String sendSmsCaptcha(String phone) {
+        if(isTestLoginPhone(phone)) {
+            return testLoginUuid;
+        }
+
         // 从Redis中获取对应手机号的验证码信息
         String captchaKey = RedisPrefixConstants.format(RedisPrefixConstants.Member.MEMBER_CAPTCHA_SMS, phone);
         String captchaValue = redisUtils.get(captchaKey);
@@ -122,6 +138,10 @@ public class LoginServiceImpl implements ILoginService {
 
     @Override
     public String smsLogin(SmsLoginCommand command) {
+        if(isValidTestLogin(command)) {
+            return loginOrRegister(command.getPhone());
+        }
+
         // 校验验证码是否正确
         String captchaKey = RedisPrefixConstants.format(RedisPrefixConstants.Member.MEMBER_CAPTCHA_SMS, command.getPhone());
         String captchaValue = redisUtils.get(captchaKey);
@@ -156,6 +176,38 @@ public class LoginServiceImpl implements ILoginService {
 
         //登录成功后删除验证码缓存
         redisUtils.delete(captchaKey);
+
+        return StpUtil.getTokenValue();
+    }
+
+    private boolean isTestLoginPhone(String phone) {
+        return testLoginEnabled && StrUtil.equals(phone, testLoginPhone);
+    }
+
+    private boolean isValidTestLogin(SmsLoginCommand command) {
+        return command != null
+                && isTestLoginPhone(command.getPhone())
+                && StrUtil.equals(command.getSmsCode(), testLoginSmsCode)
+                && StrUtil.equals(command.getUuid(), testLoginUuid);
+    }
+
+    private String loginOrRegister(String phone) {
+        Member member = memberService.getOne(Wrappers.<Member>lambdaQuery()
+                .eq(Member::getPhone, phone));
+
+        if(member == null) {
+            member = new Member();
+            member.setId(IdUtil.getSnowflakeNextId());
+            member.setPhone(phone);
+
+            HttpServletRequest request = MyServletUtil.getRequest();
+            member.setIp(ServletUtil.getClientIP(request));
+            member.setCity(IpUtils.getCityInfo(member.getIp()));
+            memberService.save(member);
+        }
+
+        AppLoginMember appLoginMember = BeanUtil.copyProperties(member, AppLoginMember.class);
+        tokenHelper.appLogin(appLoginMember);
 
         return StpUtil.getTokenValue();
     }

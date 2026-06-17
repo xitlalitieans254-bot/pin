@@ -38,6 +38,11 @@ zhipin:
     access-key-secret: ${SMS_ACCESS_KEY_SECRET:}
     sign-name: ${SMS_SIGN_NAME:速通互联验证码}
     template-code: ${SMS_TEMPLATE_CODE:100001}
+  test-login:
+    enabled: ${TEST_LOGIN_ENABLED:true}
+    phone: ${TEST_LOGIN_PHONE:12345678911}
+    sms-code: ${TEST_LOGIN_SMS_CODE:1234}
+    uuid: ${TEST_LOGIN_UUID:test-login-uuid}
 
 --- # Liquibase 配置
 spring.liquibase:
