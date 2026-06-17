@@ -35,6 +35,14 @@ public interface ITalkService extends IService<Talk> {
     Boolean add(TalkAddCommand command);
 
     /**
+     * 创建或复用当前登录用户与目标用户之间的私聊会话。
+     *
+     * @param command 会话添加命令
+     * @return 当前登录用户视角的会话
+     */
+    TalkResponse ensurePrivateTalk(TalkAddCommand command);
+
+    /**
      * 删除对话框
      * @param command 删除命令
      * @return 是否删除成功
