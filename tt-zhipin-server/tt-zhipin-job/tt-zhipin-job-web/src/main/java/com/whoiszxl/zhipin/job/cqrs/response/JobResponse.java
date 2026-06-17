@@ -96,6 +96,9 @@ public class JobResponse implements Serializable {
     @Schema(description = "地址详情")
     private String addressDetail;
 
+    @Schema(description = "状态: 0-下架 1-上架")
+    private Integer status;
+
     @Schema(description = "创建时间")
     private LocalDateTime createdAt;
 
