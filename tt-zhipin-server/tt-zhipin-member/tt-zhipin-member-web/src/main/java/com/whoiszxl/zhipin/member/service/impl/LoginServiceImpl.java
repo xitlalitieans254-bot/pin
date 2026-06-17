@@ -58,7 +58,7 @@ public class LoginServiceImpl implements ILoginService {
     @Value("${zhipin.test-login.enabled:true}")
     private boolean testLoginEnabled;
 
-    @Value("${zhipin.test-login.phone:12345678911}")
+    @Value("${zhipin.test-login.phone:12345678911,13800138000}")
     private String testLoginPhone;
 
     @Value("${zhipin.test-login.sms-code:1234}")
@@ -181,7 +181,9 @@ public class LoginServiceImpl implements ILoginService {
     }
 
     private boolean isTestLoginPhone(String phone) {
-        return testLoginEnabled && StrUtil.equals(phone, testLoginPhone);
+        return testLoginEnabled
+                && StrUtil.isNotBlank(phone)
+                && StrUtil.splitTrim(testLoginPhone, StrUtil.C_COMMA).contains(phone);
     }
 
     private boolean isValidTestLogin(SmsLoginCommand command) {

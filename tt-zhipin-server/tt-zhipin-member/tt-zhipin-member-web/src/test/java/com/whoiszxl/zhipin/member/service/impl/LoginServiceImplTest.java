@@ -11,10 +11,22 @@ class LoginServiceImplTest {
     void sendSmsCaptchaReturnsFixedUuidForTestPhoneWithoutExternalDependencies() {
         LoginServiceImpl loginService = new LoginServiceImpl(null, null, null);
         ReflectionTestUtils.setField(loginService, "testLoginEnabled", true);
-        ReflectionTestUtils.setField(loginService, "testLoginPhone", "12345678911");
+        ReflectionTestUtils.setField(loginService, "testLoginPhone", "12345678911,13800138000");
         ReflectionTestUtils.setField(loginService, "testLoginUuid", "test-login-uuid");
 
         String uuid = loginService.sendSmsCaptcha("12345678911");
+
+        assertThat(uuid).isEqualTo("test-login-uuid");
+    }
+
+    @Test
+    void sendSmsCaptchaReturnsFixedUuidForValidLookingTestPhoneAlias() {
+        LoginServiceImpl loginService = new LoginServiceImpl(null, null, null);
+        ReflectionTestUtils.setField(loginService, "testLoginEnabled", true);
+        ReflectionTestUtils.setField(loginService, "testLoginPhone", "12345678911,13800138000");
+        ReflectionTestUtils.setField(loginService, "testLoginUuid", "test-login-uuid");
+
+        String uuid = loginService.sendSmsCaptcha("13800138000");
 
         assertThat(uuid).isEqualTo("test-login-uuid");
     }
