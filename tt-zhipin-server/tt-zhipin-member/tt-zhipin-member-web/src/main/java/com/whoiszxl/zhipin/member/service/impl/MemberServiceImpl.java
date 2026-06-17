@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ObjUtil;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.whoiszxl.zhipin.member.cqrs.command.InitBaseInfoCommand;
 import com.whoiszxl.zhipin.member.entity.Member;
@@ -106,13 +107,27 @@ public class MemberServiceImpl extends ServiceImpl<MemberMapper, Member> impleme
         boolean flag = this.updateById(member);
         Assert.isTrue(flag, "更新状态失败");
 
-        MemberToutou memberToutou = BeanUtil.copyProperties(member, MemberToutou.class);
-        memberToutou.setMemberId(member.getId());
-        flag = memberToutouService.save(memberToutou);
-        Assert.isTrue(flag, "新增招聘方失败");
+        saveOrUpdateBossProfile(member);
 
         refreshBossLoginState();
         return true;
+    }
+
+    private void saveOrUpdateBossProfile(Member member) {
+        MemberToutou memberToutou = BeanUtil.copyProperties(member, MemberToutou.class);
+        memberToutou.setMemberId(member.getId());
+
+        MemberToutou existingToutou = memberToutouService.getOne(Wrappers.<MemberToutou>lambdaQuery()
+                .eq(MemberToutou::getMemberId, member.getId()));
+        if(existingToutou == null) {
+            boolean flag = memberToutouService.save(memberToutou);
+            Assert.isTrue(flag, "新增招聘方失败");
+            return;
+        }
+
+        boolean flag = memberToutouService.update(memberToutou, Wrappers.<MemberToutou>lambdaQuery()
+                .eq(MemberToutou::getMemberId, member.getId()));
+        Assert.isTrue(flag, "更新招聘方失败");
     }
 
     private void refreshBossLoginState() {

@@ -65,6 +65,42 @@ class MemberServiceImplTest {
     }
 
     @Test
+    void becomeBossUpdatesExistingToutouRecordWhenStatusOutOfSync() {
+        Long memberId = 123L;
+        Member member = new Member();
+        member.setId(memberId);
+        member.setPhone("13800138000");
+        member.setFullName("Boss Wang");
+        member.setIsToutou(0);
+
+        MemberToutou existingToutou = new MemberToutou();
+        existingToutou.setMemberId(memberId);
+
+        AppLoginMember loginMember = new AppLoginMember();
+        loginMember.setId(memberId);
+        loginMember.setIsToutou(0);
+
+        when(tokenHelper.getAppMemberId()).thenReturn(memberId);
+        when(tokenHelper.getAppLoginMember()).thenReturn(loginMember);
+        doReturn(member).when(memberService).getById(memberId);
+        doReturn(true).when(memberService).updateById(member);
+        when(memberToutouService.getOne(org.mockito.ArgumentMatchers.any())).thenReturn(existingToutou);
+        when(memberToutouService.update(org.mockito.ArgumentMatchers.any(MemberToutou.class),
+                org.mockito.ArgumentMatchers.any())).thenReturn(true);
+
+        Boolean result = memberService.becomeBoss();
+
+        assertThat(result).isTrue();
+        verify(memberToutouService, never()).save(org.mockito.ArgumentMatchers.any(MemberToutou.class));
+
+        ArgumentCaptor<MemberToutou> toutouCaptor = ArgumentCaptor.forClass(MemberToutou.class);
+        verify(memberToutouService).update(toutouCaptor.capture(), org.mockito.ArgumentMatchers.any());
+        assertThat(toutouCaptor.getValue().getMemberId()).isEqualTo(memberId);
+        assertThat(toutouCaptor.getValue().getPhone()).isEqualTo("13800138000");
+        assertThat(loginMember.getIsToutou()).isEqualTo(1);
+    }
+
+    @Test
     void becomeBossRefreshesLoginStateWhenAlreadyBoss() {
         Long memberId = 123L;
         Member member = new Member();
