@@ -73,6 +73,7 @@ class OnlineResumeServiceImplTest {
         saveCommand.setProjectExperienceDtoList(Collections.emptyList());
         saveCommand.setEduExperienceDtoList(Collections.emptyList());
         saveCommand.setQualificationList(Collections.emptyList());
+        saveCommand.setSkillTagList(Collections.emptyList());
 
         when(tokenHelper.getAppMemberId()).thenReturn(memberId);
         when(memberExpService.getOne(any())).thenReturn(existingMemberExp);
@@ -92,6 +93,7 @@ class OnlineResumeServiceImplTest {
         assertThat(updatedMemberExp.getProjectExperience()).isEqualTo("[]");
         assertThat(updatedMemberExp.getEduExperience()).isEqualTo("[]");
         assertThat(updatedMemberExp.getQualification()).isEqualTo("[]");
+        assertThat(updatedMemberExp.getSkillTags()).isEqualTo("[]");
     }
 
     private Wrapper<MemberExp> anyWrapper() {

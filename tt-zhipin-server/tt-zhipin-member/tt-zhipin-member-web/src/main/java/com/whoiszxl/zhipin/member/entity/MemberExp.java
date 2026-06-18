@@ -45,6 +45,9 @@ public class MemberExp implements Serializable {
     @Schema(description = "资格证书")
     private String qualification;
 
+    @Schema(description = "Skill tags JSON array")
+    private String skillTags;
+
     @Schema(description = "状态(0:无效 1:有效)")
     private Integer status;
 

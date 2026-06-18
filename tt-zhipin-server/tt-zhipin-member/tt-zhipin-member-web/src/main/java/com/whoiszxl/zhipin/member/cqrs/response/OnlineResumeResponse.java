@@ -32,6 +32,9 @@ public class OnlineResumeResponse {
     @Schema(description = "资格证书列表")
     private List<String> qualificationList = Collections.emptyList();
 
+    @Schema(description = "Skill tag list")
+    private List<String> skillTagList = Collections.emptyList();
+
     @Schema(description = "个人优势")
     private String advantage = "";
 

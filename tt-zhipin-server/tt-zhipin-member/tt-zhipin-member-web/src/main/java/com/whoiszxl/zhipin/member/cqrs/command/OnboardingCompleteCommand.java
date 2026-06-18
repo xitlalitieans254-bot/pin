@@ -1,0 +1,15 @@
+package com.whoiszxl.zhipin.member.cqrs.command;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+
+import javax.validation.constraints.NotBlank;
+
+@Data
+@Schema(description = "Onboarding complete command")
+public class OnboardingCompleteCommand {
+
+    @NotBlank(message = "role is required")
+    @Schema(description = "JOBSEEKER or BOSS")
+    private String role;
+}

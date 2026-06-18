@@ -71,6 +71,11 @@ public class OnlineResumeServiceImpl implements IOnlineResumeService {
             response.setQualificationList(qualificationList);
         }
 
+        if(StringUtils.isNotBlank(memberExp.getSkillTags())) {
+            List<String> skillTagList = JSONUtil.toList(memberExp.getSkillTags(), String.class);
+            response.setSkillTagList(skillTagList);
+        }
+
         response.setAdvantage(StringUtils.defaultString(memberExp.getAdvantage()));
 
         return response;
@@ -99,6 +104,9 @@ public class OnlineResumeServiceImpl implements IOnlineResumeService {
         }
         if(saveCommand.getQualificationList() != null) {
             updateMemberExp.setQualification(JSONUtil.toJsonStr(saveCommand.getQualificationList()));
+        }
+        if(saveCommand.getSkillTagList() != null) {
+            updateMemberExp.setSkillTags(JSONUtil.toJsonStr(saveCommand.getSkillTagList()));
         }
 
         MemberExp currentMemberExp = memberExpService.getOne(Wrappers.<MemberExp>lambdaQuery()

@@ -31,4 +31,7 @@ public class OnlineResumeSaveCommand {
     @Schema(description = "资格证书列表")
     private List<String> qualificationList;
 
+    @Schema(description = "Skill tag list")
+    private List<String> skillTagList;
+
 }
