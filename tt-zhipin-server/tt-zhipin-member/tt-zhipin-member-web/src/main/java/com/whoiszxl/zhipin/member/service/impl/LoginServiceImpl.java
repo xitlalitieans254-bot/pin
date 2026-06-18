@@ -58,7 +58,7 @@ public class LoginServiceImpl implements ILoginService {
     @Value("${zhipin.test-login.enabled:true}")
     private boolean testLoginEnabled;
 
-    @Value("${zhipin.test-login.phone:12345678911,13800138000}")
+    @Value("${zhipin.test-login.phone:12345678910,12345678911,12345678912,12345678913,12345678914,12345678915,12345678916,12345678917,12345678918,12345678919,12345678920,13800138000}")
     private String testLoginPhone;
 
     @Value("${zhipin.test-login.sms-code:1234}")
