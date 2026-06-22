@@ -9,7 +9,8 @@ class LoginServiceImplTest {
 
     private static final String TEST_LOGIN_PHONES = "12345678910,12345678911,12345678912,12345678913,"
             + "12345678914,12345678915,12345678916,12345678917,12345678918,12345678919,"
-            + "12345678920,13800138000";
+            + "12345678920,12345678921,12345678922,12345678923,12345678924,12345678925,"
+            + "12345678926,12345678927,12345678928,12345678929,12345678930,13800138000";
 
     @Test
     void sendSmsCaptchaReturnsFixedUuidForTestPhoneWithoutExternalDependencies() {
@@ -42,7 +43,7 @@ class LoginServiceImplTest {
         ReflectionTestUtils.setField(loginService, "testLoginPhone", TEST_LOGIN_PHONES);
         ReflectionTestUtils.setField(loginService, "testLoginUuid", "test-login-uuid");
 
-        for(long phone = 12345678910L; phone <= 12345678920L; phone++) {
+        for(long phone = 12345678910L; phone <= 12345678930L; phone++) {
             assertThat(loginService.sendSmsCaptcha(String.valueOf(phone))).isEqualTo("test-login-uuid");
         }
     }
