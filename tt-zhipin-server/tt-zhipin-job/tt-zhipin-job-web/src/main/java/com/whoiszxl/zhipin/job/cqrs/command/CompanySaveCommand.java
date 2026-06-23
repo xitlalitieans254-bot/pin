@@ -46,14 +46,14 @@ public class CompanySaveCommand {
     @Schema(description = "加班情况: 1-不加班 2-偶尔加班 3-弹性工作")
     private Integer overtime;
 
-    @Schema(description = "公司照片 JSON 数组字符串")
-    private String photo;
+    @Schema(description = "公司照片 JSON 数组。可传数组或 JSON 数组字符串，空字符串按 [] 处理")
+    private Object photo;
 
-    @Schema(description = "员工福利 JSON 数组字符串")
-    private String employeeWelfare;
+    @Schema(description = "员工福利 JSON 数组。可传数组或 JSON 数组字符串，空字符串按 [] 处理")
+    private Object employeeWelfare;
 
-    @Schema(description = "主营业务 JSON 数组字符串")
-    private String mainBusiness;
+    @Schema(description = "主营业务 JSON 数组。可传数组或 JSON 数组字符串，空字符串按 [] 处理")
+    private Object mainBusiness;
 
     @Schema(description = "公司经度")
     private BigDecimal longitude;

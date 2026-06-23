@@ -32,6 +32,10 @@ public class OnboardingOptionsResponse {
 
     private List<OptionItemResponse> companyScales = new ArrayList<>();
 
+    private List<OptionItemResponse> restWays = new ArrayList<>();
+
+    private List<OptionItemResponse> overtimeOptions = new ArrayList<>();
+
     private List<OptionItemResponse> experienceRequirements = new ArrayList<>();
 
     private List<OptionItemResponse> salaryRanges = new ArrayList<>();

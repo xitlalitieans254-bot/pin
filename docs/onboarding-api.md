@@ -116,7 +116,14 @@ Authorization: Bearer <token>
 
 `GET /member/api/onboarding/options`
 
-返回角色、求职者步骤、招聘方步骤、城市、职位分类、行业、技能、学历、公司规模、薪资范围、虚拟头像等选项。职位分类是左右两栏结构：一级类别在左，`children` 是右侧具体岗位。
+返回角色、求职者步骤、招聘方步骤、城市、职位分类、行业、技能、学历、公司规模、休息方式、加班情况、薪资范围、虚拟头像等选项。职位分类是左右两栏结构：一级类别在左，`children` 是右侧具体岗位。
+
+招聘方公司资料相关枚举：
+
+- `restWays`：`1` 双休，`2` 排班轮休。
+- `overtimeOptions`：`1` 不加班，`2` 偶尔加班，`3` 弹性工作。
+
+保存企业资料时 `restWay` 和 `overtime` 都可以不传；如果传，必须使用上面的数字枚举。
 
 ## 求职者 stepKey 与字段
 
@@ -301,10 +308,27 @@ Authorization: Bearer <token>
   "companyLogo": "https://example.com/logo.png",
   "companyScale": "20-99人",
   "industry": "互联网/AI",
+  "restWay": 1,
+  "overtime": 2,
+  "photo": ["https://example.com/company-1.png"],
+  "employeeWelfare": [
+    {
+      "title": "五险一金",
+      "subTitle": "入职缴纳"
+    }
+  ],
+  "mainBusiness": ["AI招聘", "人才服务"],
   "city": "泉州",
   "addressDetail": "软件园 1 号楼"
 }
 ```
+
+`photo`、`employeeWelfare`、`mainBusiness` 是 JSON 数组字段。后端兼容两种传法：
+
+- 推荐：直接传数组。
+- 兼容：传 JSON 数组字符串，例如 `"[\"AI招聘\"]"`。
+
+空字符串会按 `[]` 保存；非法格式会返回 `code: 1`，例如 `message: "公司照片格式不正确"`。
 
 发布职位示例：
 
@@ -325,6 +349,46 @@ Authorization: Bearer <token>
 ```
 
 如果当前招聘方已经保存过企业资料，发布职位时可以不传 `companyId`，后端会使用当前招聘方自己的公司。
+
+## IM 历史消息
+
+实时互发正常后，`POST /im/message/offline/list` 只用于拉 Redis 离线补偿消息。用户在线时返回空列表是正常的。
+
+换手机、重装、清缓存后恢复聊天记录，请调用数据库历史接口：
+
+`POST /im/message/history/list`
+
+```json
+{
+  "targetMemberId": 100,
+  "page": 1,
+  "size": 20,
+  "beforeSequence": "1912345678901234567"
+}
+```
+
+`beforeSequence` 可不传。需要向上翻更早消息时，传当前列表最早一条消息的 `sequence`。
+
+返回 `data.list` 按从旧到新排列：
+
+```json
+{
+  "list": [
+    {
+      "contentId": 1001,
+      "fromMemberId": 100,
+      "toMemberId": 200,
+      "ownerId": 200,
+      "messageType": 0,
+      "sequence": 1,
+      "messageContent": "你好",
+      "mine": false,
+      "createdAt": "2026-06-16T15:00:00"
+    }
+  ],
+  "total": 1
+}
+```
 
 ## 图片上传
 

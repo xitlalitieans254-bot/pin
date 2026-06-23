@@ -5,6 +5,7 @@ import com.whoiszxl.zhipin.member.cqrs.command.OnboardingCompleteCommand;
 import com.whoiszxl.zhipin.member.cqrs.command.OnboardingDraftSaveCommand;
 import com.whoiszxl.zhipin.member.cqrs.command.OnboardingRoleCommand;
 import com.whoiszxl.zhipin.member.cqrs.response.OnboardingDraftResponse;
+import com.whoiszxl.zhipin.member.cqrs.response.OnboardingOptionsResponse;
 import com.whoiszxl.zhipin.member.cqrs.response.OnboardingStatusResponse;
 import com.whoiszxl.zhipin.member.entity.Member;
 import com.whoiszxl.zhipin.member.entity.MemberExp;
@@ -47,6 +48,24 @@ class OnboardingServiceImplTest {
     @Spy
     @InjectMocks
     private OnboardingServiceImpl onboardingService;
+
+    @Test
+    void optionsExposeCompanyRestAndOvertimeEnums() {
+        OnboardingOptionsResponse response = onboardingService.options();
+
+        assertThat(response.getRestWays())
+                .extracting("value")
+                .containsExactly("1", "2");
+        assertThat(response.getRestWays())
+                .extracting("label")
+                .containsExactly("双休", "排班轮休");
+        assertThat(response.getOvertimeOptions())
+                .extracting("value")
+                .containsExactly("1", "2", "3");
+        assertThat(response.getOvertimeOptions())
+                .extracting("label")
+                .containsExactly("不加班", "偶尔加班", "弹性工作");
+    }
 
     @Test
     void statusReturnsRoleSelectWhenCurrentMemberHasNoOnboardingRecord() {

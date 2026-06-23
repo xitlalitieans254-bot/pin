@@ -1,14 +1,18 @@
 package com.whoiszxl.zhipin.im.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.whoiszxl.zhipin.im.constants.TalkTypeEnum;
 import com.whoiszxl.zhipin.im.cqrs.command.TalkAddCommand;
+import com.whoiszxl.zhipin.im.cqrs.query.MessageHistoryQuery;
 import com.whoiszxl.zhipin.im.cqrs.query.OfflineListQuery;
+import com.whoiszxl.zhipin.im.cqrs.response.MessageHistoryResponse;
 import com.whoiszxl.zhipin.im.entity.GroupMessage;
 import com.whoiszxl.zhipin.im.entity.Message;
 import com.whoiszxl.zhipin.im.entity.MessageContent;
@@ -22,6 +26,7 @@ import com.whoiszxl.zhipin.im.service.IGroupMessageService;
 import com.whoiszxl.zhipin.im.service.IMessageContentService;
 import com.whoiszxl.zhipin.im.service.IMessageService;
 import com.whoiszxl.zhipin.im.service.ITalkService;
+import com.whoiszxl.zhipin.tools.common.entity.response.PageResponse;
 import com.whoiszxl.zhipin.tools.common.token.TokenHelper;
 import com.whoiszxl.zhipin.tools.common.utils.RedisUtils;
 import lombok.RequiredArgsConstructor;
@@ -33,9 +38,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -49,6 +57,9 @@ import java.util.Set;
 @Slf4j
 @RequiredArgsConstructor
 public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> implements IMessageService {
+
+    private static final int FIRST_PAGE = 1;
+    private static final int DEFAULT_HISTORY_PAGE_SIZE = 20;
 
     private final IMessageContentService messageContentService;
 
@@ -163,6 +174,45 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
         return chatMessages;
     }
 
+    @Override
+    public PageResponse<MessageHistoryResponse> listPrivateHistory(MessageHistoryQuery query) {
+        Assert.notNull(query, "请求参数不能为空");
+        normalizeHistoryQuery(query);
+        Long currentMemberId = tokenHelper.getAppMemberId();
+        Long targetMemberId = query.getTargetMemberId();
+        Assert.notNull(currentMemberId, "当前登录用户不能为空");
+        Assert.notNull(targetMemberId, "会话对象不能为空");
+        Assert.isTrue(!Objects.equals(currentMemberId, targetMemberId), "不能拉取自己的聊天历史");
+
+        Long beforeSequence = parseOptionalSequence(query.getBeforeSequence(), "历史消息游标不正确");
+        IPage<Message> messagePage = this.page(query.toPage(), Wrappers.<Message>lambdaQuery()
+                .eq(Message::getOwnerId, currentMemberId)
+                .and(wrapper -> wrapper
+                        .eq(Message::getFromMemberId, currentMemberId)
+                        .eq(Message::getToMemberId, targetMemberId)
+                        .or()
+                        .eq(Message::getFromMemberId, targetMemberId)
+                        .eq(Message::getToMemberId, currentMemberId))
+                .lt(beforeSequence != null, Message::getSequence, beforeSequence)
+                .orderByDesc(Message::getSequence)
+                .orderByDesc(Message::getCreatedAt));
+
+        List<Message> messages = messagePage.getRecords() == null
+                ? new ArrayList<>()
+                : new ArrayList<>(messagePage.getRecords());
+        Collections.reverse(messages);
+
+        Map<Long, MessageContent> contentMap = contentMap(messages);
+        List<MessageHistoryResponse> historyList = messages.stream()
+                .map(message -> toHistoryResponse(message, contentMap.get(message.getContentId()), currentMemberId))
+                .collect(Collectors.toList());
+
+        PageResponse<MessageHistoryResponse> response = new PageResponse<>();
+        response.setList(historyList);
+        response.setTotal(messagePage.getTotal());
+        return response;
+    }
+
     private Long parseClientSequence(String clientSequence) {
         if (clientSequence == null || clientSequence.trim().isEmpty()) {
             return 0L;
@@ -204,6 +254,63 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
             return ((Number) value).longValue();
         }
         return Long.parseLong(String.valueOf(value));
+    }
+
+    private void normalizeHistoryQuery(MessageHistoryQuery query) {
+        if(query.getPage() == null) {
+            query.setPage(FIRST_PAGE);
+        }
+        if(query.getSize() == null) {
+            query.setSize(DEFAULT_HISTORY_PAGE_SIZE);
+        }
+    }
+
+    private Long parseOptionalSequence(String sequence, String errorMessage) {
+        if(sequence == null || sequence.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return Long.parseLong(sequence);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(errorMessage);
+        }
+    }
+
+    private Map<Long, MessageContent> contentMap(List<Message> messages) {
+        if(CollUtil.isEmpty(messages)) {
+            return Collections.emptyMap();
+        }
+        List<Long> contentIds = messages.stream()
+                .map(Message::getContentId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        if(CollUtil.isEmpty(contentIds)) {
+            return Collections.emptyMap();
+        }
+        List<MessageContent> contentList = messageContentService.listByIds(contentIds);
+        if(CollUtil.isEmpty(contentList)) {
+            return Collections.emptyMap();
+        }
+        return contentList.stream()
+                .collect(Collectors.toMap(MessageContent::getId, content -> content, (left, right) -> left));
+    }
+
+    private MessageHistoryResponse toHistoryResponse(Message message, MessageContent content, Long currentMemberId) {
+        MessageHistoryResponse response = new MessageHistoryResponse();
+        response.setContentId(message.getContentId());
+        response.setFromMemberId(message.getFromMemberId());
+        response.setToMemberId(message.getToMemberId());
+        response.setOwnerId(message.getOwnerId());
+        response.setMessageType(message.getMessageType());
+        response.setSequence(message.getSequence());
+        response.setCreatedAt(message.getCreatedAt());
+        response.setMine(Objects.equals(message.getFromMemberId(), currentMemberId));
+        if(content != null) {
+            response.setMessageContent(content.getMessageContent());
+            response.setExtra(content.getExtra());
+        }
+        return response;
     }
 
     private GroupMessage buildGroupMessage(GroupChatPack groupChatPack, long contentId) {

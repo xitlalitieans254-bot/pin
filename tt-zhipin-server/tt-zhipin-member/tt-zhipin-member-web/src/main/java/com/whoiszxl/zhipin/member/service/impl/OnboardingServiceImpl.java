@@ -201,6 +201,8 @@ public class OnboardingServiceImpl extends ServiceImpl<MemberOnboardingMapper, M
                 item("7", "在职-考虑机会"), item("8", "在职-暂不考虑")
         ));
         response.setCompanyScales(options("0-20人", "20-99人", "100-499人", "500-999人", "1000-9999人", "10000人以上"));
+        response.setRestWays(Arrays.asList(item("1", "双休"), item("2", "排班轮休")));
+        response.setOvertimeOptions(Arrays.asList(item("1", "不加班"), item("2", "偶尔加班"), item("3", "弹性工作")));
         response.setExperienceRequirements(options("不限", "1-3年", "3-5年", "5-10年", "10年以上"));
         response.setSalaryRanges(options("3-5K", "5-8K", "8-12K", "12-20K", "20-30K", "30K以上"));
         response.setVirtualAvatars(options(

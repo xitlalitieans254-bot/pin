@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.whoiszxl.zhipin.job.cqrs.command.CompanySaveCommand;
@@ -32,6 +33,7 @@ public class CompanyServiceImpl extends ServiceImpl<CompanyMapper, Company> impl
     private static final int ENABLED_STATUS = 1;
     private static final long INIT_VERSION = 1L;
     private static final int NOT_DELETED = 0;
+    private static final String EMPTY_JSON_ARRAY = "[]";
 
     private final TokenHelper tokenHelper;
 
@@ -83,11 +85,13 @@ public class CompanyServiceImpl extends ServiceImpl<CompanyMapper, Company> impl
         company.setIndustry(StrUtil.trim(command.getIndustry()));
         company.setWorkDateStart(command.getWorkDateStart());
         company.setWorkDateEnd(command.getWorkDateEnd());
+        validateEnumValue(command.getRestWay(), 1, 2, "休息方式不正确");
+        validateEnumValue(command.getOvertime(), 1, 3, "加班情况不正确");
         company.setRestWay(command.getRestWay());
         company.setOvertime(command.getOvertime());
-        company.setPhoto(StrUtil.trim(command.getPhoto()));
-        company.setEmployeeWelfare(StrUtil.trim(command.getEmployeeWelfare()));
-        company.setMainBusiness(StrUtil.trim(command.getMainBusiness()));
+        company.setPhoto(normalizeJsonArrayField(command.getPhoto(), "公司照片格式不正确"));
+        company.setEmployeeWelfare(normalizeJsonArrayField(command.getEmployeeWelfare(), "员工福利格式不正确"));
+        company.setMainBusiness(normalizeJsonArrayField(command.getMainBusiness(), "主营业务格式不正确"));
         company.setLongitude(command.getLongitude());
         company.setLatitude(command.getLatitude());
         company.setCountry(StrUtil.trim(command.getCountry()));
@@ -99,5 +103,42 @@ public class CompanyServiceImpl extends ServiceImpl<CompanyMapper, Company> impl
 
     private CompanyResponse toResponse(Company company) {
         return BeanUtil.copyProperties(company, CompanyResponse.class);
+    }
+
+    private void validateEnumValue(Integer value, int min, int max, String message) {
+        if(value == null) {
+            return;
+        }
+        Assert.isTrue(value >= min && value <= max, message);
+    }
+
+    private String normalizeJsonArrayField(Object value, String errorMessage) {
+        if(value == null) {
+            return null;
+        }
+
+        if(value instanceof CharSequence) {
+            String text = StrUtil.trim(String.valueOf(value));
+            if(StrUtil.isBlank(text)) {
+                return EMPTY_JSON_ARRAY;
+            }
+            if(!text.startsWith("[") || !text.endsWith("]")) {
+                throw new IllegalArgumentException(errorMessage);
+            }
+            return parseJsonArray(text, errorMessage);
+        }
+
+        if(!(value instanceof Iterable) && !value.getClass().isArray()) {
+            throw new IllegalArgumentException(errorMessage);
+        }
+        return parseJsonArray(JSONUtil.toJsonStr(value), errorMessage);
+    }
+
+    private String parseJsonArray(String text, String errorMessage) {
+        try {
+            return JSONUtil.parseArray(text).toString();
+        } catch (Exception e) {
+            throw new IllegalArgumentException(errorMessage);
+        }
     }
 }

@@ -21,8 +21,11 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
@@ -120,6 +123,82 @@ class CompanyServiceImplTest {
         ArgumentCaptor<Wrapper<Company>> wrapperCaptor = wrapperCaptor();
         verify(companyService).getOne(wrapperCaptor.capture());
         assertThat(wrapperCaptor.getValue().getSqlSegment()).contains("apply_member_id");
+    }
+
+    @Test
+    void saveMyCompanyNormalizesJsonArrayFieldsBeforePersisting() {
+        when(tokenHelper.getAppMemberId()).thenReturn(123L);
+        doReturn(null).when(companyService).getOne(anyCompanyWrapper());
+        doReturn(true).when(companyService).save(any(Company.class));
+
+        CompanySaveCommand command = new CompanySaveCommand();
+        command.setCompanyFullName("AI智聘科技有限公司");
+        command.setCompanyAbbrName("AI智聘");
+        command.setPhoto("");
+        command.setEmployeeWelfare(Arrays.asList(
+                Collections.singletonMap("title", "五险一金"),
+                Collections.singletonMap("title", "年终奖")
+        ));
+        command.setMainBusiness("[\"AI招聘\",\"人才服务\"]");
+        command.setRestWay(2);
+        command.setOvertime(3);
+
+        companyService.saveMyCompany(command);
+
+        ArgumentCaptor<Company> companyCaptor = ArgumentCaptor.forClass(Company.class);
+        verify(companyService).save(companyCaptor.capture());
+        Company savedCompany = companyCaptor.getValue();
+        assertThat(savedCompany.getPhoto()).isEqualTo("[]");
+        assertThat(savedCompany.getEmployeeWelfare()).contains("五险一金", "年终奖");
+        assertThat(savedCompany.getMainBusiness()).isEqualTo("[\"AI招聘\",\"人才服务\"]");
+        assertThat(savedCompany.getRestWay()).isEqualTo(2);
+        assertThat(savedCompany.getOvertime()).isEqualTo(3);
+    }
+
+    @Test
+    void saveMyCompanyRejectsInvalidJsonArrayFieldWithBusinessMessage() {
+        when(tokenHelper.getAppMemberId()).thenReturn(123L);
+        doReturn(null).when(companyService).getOne(anyCompanyWrapper());
+
+        CompanySaveCommand command = new CompanySaveCommand();
+        command.setCompanyFullName("AI智聘科技有限公司");
+        command.setCompanyAbbrName("AI智聘");
+        command.setPhoto("not json");
+
+        assertThatThrownBy(() -> companyService.saveMyCompany(command))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("公司照片格式不正确");
+    }
+
+    @Test
+    void saveMyCompanyRejectsJsonObjectForArrayField() {
+        when(tokenHelper.getAppMemberId()).thenReturn(123L);
+        doReturn(null).when(companyService).getOne(anyCompanyWrapper());
+
+        CompanySaveCommand command = new CompanySaveCommand();
+        command.setCompanyFullName("AI智聘科技有限公司");
+        command.setCompanyAbbrName("AI智聘");
+        command.setPhoto(Collections.singletonMap("url", "https://example.com/company.png"));
+
+        assertThatThrownBy(() -> companyService.saveMyCompany(command))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("公司照片格式不正确");
+    }
+
+    @Test
+    void saveMyCompanyRejectsInvalidRestWayBeforePersisting() {
+        when(tokenHelper.getAppMemberId()).thenReturn(123L);
+        doReturn(null).when(companyService).getOne(anyCompanyWrapper());
+
+        CompanySaveCommand command = new CompanySaveCommand();
+        command.setCompanyFullName("AI智聘科技有限公司");
+        command.setCompanyAbbrName("AI智聘");
+        command.setRestWay(3);
+
+        assertThatThrownBy(() -> companyService.saveMyCompany(command))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("休息方式不正确");
+        verify(companyService, never()).save(any(Company.class));
     }
 
     @SuppressWarnings("unchecked")
