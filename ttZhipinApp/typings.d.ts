@@ -220,7 +220,7 @@ type MemberInfoResponse = {
     salaryRangeEnd: number;
     industryArr: string[];
   }
-  
+
   type WorkExperienceDto = {
     companyFullName: string;
     industry: string;
@@ -229,7 +229,7 @@ type MemberInfoResponse = {
     jobName: string;
     workDetail: string;
   }
-  
+
   type ProjectExperienceDto = {
     projectName: string;
     projectRole: string;
@@ -238,7 +238,7 @@ type MemberInfoResponse = {
     projectResult: string;
     projectLink: string;
   }
-  
+
   type EduExperienceDto = {
     schoolName: string;
     educationAttainment: string;
@@ -248,7 +248,7 @@ type MemberInfoResponse = {
     schoolExp: string;
     paper: string;
   }
-  
+
 
   type AttachmentResume = {
     id: string;

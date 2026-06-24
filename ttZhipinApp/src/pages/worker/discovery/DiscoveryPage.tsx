@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { CommonColor } from '../../../common/CommonColor';
 import GradientHeader from '../components/GradientHeader';
 
 export default () => {
@@ -21,7 +22,7 @@ export default () => {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#f4f5f7',
+    backgroundColor: CommonColor.zhipinBg,
   },
 
   content: {

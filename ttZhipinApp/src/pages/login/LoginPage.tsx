@@ -8,18 +8,15 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 import icon_logo_main from '../../assets/images/logo_bg_transparent.png';
-import icon_un_selection from '../../assets/icons/un_selection.png';
-import icon_selection from '../../assets/icons/selection.png';
 
 import icon_arrow from '../../assets/icons/arrow_left.png';
-import icon_wx from '../../assets/icons/weixin.png';
-import icon_apple from '../../assets/icons/apple.png';
-import icon_phone from '../../assets/icons/phone.png';
-import icon_qq from '../../assets/icons/qq.png';
 import icon_triangle from '../../assets/icons/show_more.png';
 import icon_close from '../../assets/icons/close.png';
 import MemberStore from "../../stores/MemberStore";
 import { CommonColor } from "../../common/CommonColor";
+
+const BRAND_COLOR = CommonColor.mainColor;
+const BRAND_DISABLED_COLOR = '#e5e8f5';
 
 export default () => {
   const navigation = useNavigation<StackNavigationProp<any>>();
@@ -79,7 +76,7 @@ export default () => {
       },
 
       otherLoginText: {
-        color: '#303080',
+        color: CommonColor.mainColorDeep,
         fontSize: 13
       },
 
@@ -94,12 +91,14 @@ export default () => {
       wxLoginButton: {
         width: '100%',
         height: 50,
-        backgroundColor: '#05c160',
+        backgroundColor: '#ffffff',
         borderRadius: 35,
         justifyContent: 'center',
         alignItems: 'center',
         flexDirection: 'row',
         marginBottom: 10,
+        borderWidth: 0.8,
+        borderColor: CommonColor.line,
       },
 
       wxLoginIcon: {
@@ -109,7 +108,7 @@ export default () => {
 
       wxLoginText: {
         fontSize: 16,
-        color: 'white',
+        color: CommonColor.fontColor,
         marginLeft: 8
       },
 
@@ -140,7 +139,7 @@ export default () => {
       qqLoginButton: {
         width: '100%',
         height: 50,
-        backgroundColor: '#1296db',
+        backgroundColor: '#eef2ff',
         borderRadius: 35,
         justifyContent: 'center',
         alignItems: 'center',
@@ -155,7 +154,7 @@ export default () => {
 
       qqLoginText: {
         fontSize: 16,
-        color: 'white',
+        color: BRAND_COLOR,
         marginLeft: 8
       },
 
@@ -163,7 +162,7 @@ export default () => {
       oneClickLoginButton: {
         width: '100%',
         height: 50,
-        backgroundColor: '#0aa7a0',
+        backgroundColor: BRAND_COLOR,
         borderRadius: 35,
         justifyContent: 'center',
         alignItems: 'center',
@@ -198,7 +197,11 @@ export default () => {
         <View style={commonStyles.protocolLayout}>
           
           <TouchableOpacity onPress={() => { setCheck(!check) }}>
-            <Image style={commonStyles.radioButton} source={check ? icon_selection : icon_un_selection}/>
+            <Icon
+              style={commonStyles.radioButtonIcon}
+              color={check ? BRAND_COLOR : CommonColor.normalGrey}
+              name={check ? 'checkmark-circle' : 'ellipse-outline'}
+            />
           </TouchableOpacity>
 
           <Text style={commonStyles.labelText}>我已阅读并同意</Text>
@@ -227,19 +230,19 @@ export default () => {
 
         {/** APPLE登录方式 */}
         <TouchableOpacity style={styles.appleLoginButton} activeOpacity={0.8}>
-          <Image style={styles.appleLoginIcon} source={icon_apple}/>
+          <FontAwesome size={23} color={CommonColor.fontColor} name="apple" />
           <Text style={styles.appleLoginText}>通过Apple登录</Text>
         </TouchableOpacity>
 
         {/** 微信登录方式 */}
         <TouchableOpacity style={styles.wxLoginButton} activeOpacity={0.8}>
-          <Image style={styles.wxLoginIcon} source={icon_wx}/>
+          <FontAwesome size={22} color={CommonColor.wxColor} name="weixin" />
           <Text style={styles.wxLoginText}>微信登录</Text>
         </TouchableOpacity>
 
         {/** 微信登录方式 */}
         <TouchableOpacity style={styles.qqLoginButton} activeOpacity={0.8}>
-          <Image style={styles.qqLoginIcon} source={icon_qq}/>
+          <FontAwesome size={22} color={BRAND_COLOR} name="qq" />
           <Text style={styles.qqLoginText}>QQ登录</Text>
         </TouchableOpacity>
 
@@ -254,7 +257,7 @@ export default () => {
             }
           } )
         }}>
-          <Image style={styles.wxLoginIcon} source={icon_phone}/>
+          <Icon size={22} color="#ffffff" name="phone-portrait-outline" />
           <Text style={styles.oneClickLoginText}>手机号登录</Text>
         </TouchableOpacity>
 
@@ -273,21 +276,21 @@ export default () => {
         height: '100%',
         flexDirection: 'column',
         alignItems: 'flex-start',
-        paddingHorizontal: 20,
+        paddingHorizontal: 22,
       },
 
       phoneLoginTitle: {
-        fontSize: 24,
+        fontSize: 27,
         color: 'black',
         fontWeight: 'bold',
-        marginTop: 54,
+        marginTop: 104,
       },
 
       
       phoneLoginSubTitle: {
         fontSize: 12,
         color: CommonColor.deepGrey,
-        marginTop: 10,
+        marginTop: 12,
       },
 
       passwordTip: {
@@ -304,7 +307,7 @@ export default () => {
         backgroundColor: '#f5f7f8',
         borderRadius: 14,
         paddingHorizontal: 14,
-        marginTop: 24
+        marginTop: 44
       },
 
       phoneInputPre: {
@@ -355,7 +358,7 @@ export default () => {
 
       changeLayout: {
         width: '100%',
-        marginTop: 10,
+        marginTop: 12,
         alignItems: 'center',
         flexDirection: 'row'
       },
@@ -374,13 +377,13 @@ export default () => {
 
       forgetPasswordText: {
         fontSize: 12,
-        color: '#303080',
+        color: CommonColor.mainColorDeep,
       },
 
       loginButton: {
         width: '100%',
         height: 48,
-        backgroundColor: '#0aa7a0',
+        backgroundColor: BRAND_COLOR,
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 24,
@@ -390,7 +393,7 @@ export default () => {
       unloginButton: {
         width: '100%',
         height: 48,
-        backgroundColor: '#dce7e6',
+        backgroundColor: BRAND_DISABLED_COLOR,
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 24,
@@ -423,7 +426,7 @@ export default () => {
 
       closeButtonLayout: {
         position: 'absolute',
-        top: 5,
+        top: 18,
         left: 20,
       },
 
@@ -480,12 +483,16 @@ export default () => {
           <View style={commonStyles.protocolLayout}>
             
             <TouchableOpacity onPress={() => { setCheck(!check) }}>
-              <Image style={commonStyles.radioButton} source={check ? icon_selection : icon_un_selection}/>
+              <Icon
+                style={commonStyles.radioButtonIcon}
+                color={check ? BRAND_COLOR : CommonColor.normalGrey}
+                name={check ? 'checkmark-circle' : 'ellipse-outline'}
+              />
             </TouchableOpacity>
 
             <Text style={commonStyles.labelText}>已阅读并同意</Text>
             <TouchableOpacity onPress={() => {
-              Linking.openURL('https://github.com/xitlalitieans254-bot/pin');
+              Linking.openURL('https://www.github.com/whoiszxl/tt-zhipin');
             }}>
               <Text style={commonStyles.protocolText}>《AI智聘用户协议》和《隐私政策》</Text>
             </TouchableOpacity>
@@ -566,9 +573,11 @@ const commonStyles = StyleSheet.create({
       marginTop: 15,
     },
 
-    radioButton: {
+    radioButtonIcon: {
       width: 20,
       height: 20,
+      fontSize: 20,
+      marginRight: 3,
     },
 
     labelText: {
@@ -578,6 +587,6 @@ const commonStyles = StyleSheet.create({
 
     protocolText: {
       fontSize: 10,
-      color: '#1020ff'
+      color: BRAND_COLOR
     },
 })

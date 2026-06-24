@@ -18,8 +18,8 @@ import {
   OnlineResumeSection,
 } from '../../../utils/OnlineResumeDraftUtil';
 
-const ACCENT_COLOR = '#12B8B0';
-const ACCENT_BG = '#EFFFFD';
+const ACCENT_COLOR = CommonColor.mainColor;
+const ACCENT_BG = CommonColor.transparentMainColor;
 const PAGE_BG = '#F6F7F9';
 const CARD_BG = '#FFFFFF';
 

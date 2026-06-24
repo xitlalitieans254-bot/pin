@@ -7,6 +7,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { CommonColor } from "../../common/CommonColor";
 
 import JobPage from "./job/JobPage";
 import DiscoveryPage from "./discovery/DiscoveryPage";
@@ -15,7 +16,7 @@ import MinePage from "./mine/MinePage";
 
 
 const Tab = createBottomTabNavigator();
-const ACTIVE_COLOR = '#0aa7a0';
+const ACTIVE_COLOR = CommonColor.mainColor;
 
 const tabIcons = [
     { active: 'briefcase', inactive: 'briefcase-outline' },
@@ -75,20 +76,22 @@ export default () => {
 
                     return (
 
-                        <TouchableOpacity activeOpacity={1} key={label} style={styles.myTabItem} onPress={() => {
+                        <TouchableOpacity activeOpacity={0.72} key={label} style={styles.myTabItem} onPress={() => {
                             if(!isFocused) {
                                 navigation.navigate(route.name);
                             }
 
                         }}>
 
-                            <Ionicons
-                                style={isFocused ? styles.focusedIcon : styles.unFocusedIcon}
-                                name={iconName}
-                                size={isFocused ? 21 : 20}
-                            />
+                            <View style={isFocused ? styles.tabContentActive : styles.tabContent}>
+                                <Ionicons
+                                    style={isFocused ? styles.focusedIcon : styles.unFocusedIcon}
+                                    name={iconName}
+                                    size={isFocused ? 20 : 19}
+                                />
 
-                            <Text style={isFocused ? styles.focusedText : styles.unFocusedText}>{label}</Text>
+                                <Text style={isFocused ? styles.focusedText : styles.unFocusedText}>{label}</Text>
+                            </View>
                         </TouchableOpacity>
                     );
                 })}
@@ -138,8 +141,8 @@ const styles = StyleSheet.create({
         alignItems: "flex-start",
         backgroundColor: "white",
         borderTopWidth: 0.5,
-        borderTopColor: '#eef0f3',
-        paddingTop: 4,
+        borderTopColor: CommonColor.line,
+        paddingTop: 3,
     },
 
     myTabItem: {
@@ -147,6 +150,20 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center'
+    },
+
+    tabContent: {
+        minWidth: 54,
+        height: 42,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
+    tabContentActive: {
+        minWidth: 54,
+        height: 42,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 
     choicenessTabBar: {
@@ -177,14 +194,14 @@ const styles = StyleSheet.create({
         fontSize: 10,
         color: ACTIVE_COLOR,
         fontWeight: '700',
-        marginTop: 3,
+        marginTop: 2,
     },
 
     unFocusedText: {
         fontSize: 10,
         color: '#8f9399',
         fontWeight: '500',
-        marginTop: 3,
+        marginTop: 2,
     },
 
     focusedIcon: {

@@ -8,13 +8,12 @@ import icon_close from '../../assets/icons/close.png';
 import MemberStore from "../../stores/MemberStore";
 import { CommonColor } from "../../common/CommonColor";
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import StorageUtil from "../../utils/StorageUtil";
-import { CommonConstant } from "../../common/CommonConstant";
-import { isMemberInfoComplete } from "../../utils/MemberInfoUtil";
+import { requestAndNavigateByOnboarding } from "../../utils/OnboardingNavigationUtil";
 
 
 const RESEND_SECONDS = 60;
-const BRAND_COLOR = '#0aa7a0';
+const BRAND_COLOR = CommonColor.mainColor;
+const BRAND_DISABLED_COLOR = '#e5e8f5';
 
 
 //校验短信验证码页面
@@ -34,16 +33,21 @@ export default () => {
     : '您的手机';
   const [loginToken, setLoginToken] = useState<string>(String(routeParams.loginToken ?? ''));
   const [submitting, setSubmitting] = useState<boolean>(false);
+  const [autoSubmitting, setAutoSubmitting] = useState<boolean>(false);
   const [resending, setResending] = useState<boolean>(false);
 
 
 
   const codeInputRef = useRef<TextInput | null>(null);
+  const lastAutoSubmittedCodeRef = useRef<string>('');
+  const submittingRef = useRef<boolean>(false);
+  const navigatingRef = useRef<boolean>(false);
 
   const [inputValues, setInputValues] = useState<string[]>(['', '', '', '']);
   const [resendSeconds, setResendSeconds] = useState<number>(RESEND_SECONDS);
   const smsCode = inputValues.join('');
-  const canLogin = smsCode.length === 4 && inputValues.every(Boolean) && !submitting;
+  const isCodeComplete = smsCode.length === 4 && inputValues.every(Boolean);
+  const canLogin = isCodeComplete && !submitting && !autoSubmitting;
   const canResend = resendSeconds === 0 && !resending;
 
   useEffect(() => {
@@ -58,9 +62,21 @@ export default () => {
     return () => clearTimeout(timer);
   }, [resendSeconds]);
 
+  const setSubmittingState = (nextSubmitting: boolean) => {
+    submittingRef.current = nextSubmitting;
+    setSubmitting(nextSubmitting);
+  };
 
 
   const handleCodeTextChange = (text: string) => {
+    if (navigatingRef.current) {
+      return;
+    }
+
+    if (submittingRef.current) {
+      return;
+    }
+
     const currentText = text.replace(/\D/g, '').slice(0, 4);
     const nextInputValues = currentText.split('');
 
@@ -69,47 +85,56 @@ export default () => {
     }
 
     setInputValues(nextInputValues);
+
+    if (currentText.length < 4) {
+      lastAutoSubmittedCodeRef.current = '';
+      setAutoSubmitting(false);
+      return;
+    }
+
+    if (submittingRef.current || currentText === lastAutoSubmittedCodeRef.current) {
+      return;
+    }
+
+    lastAutoSubmittedCodeRef.current = currentText;
+    setAutoSubmitting(true);
+    onPressByLogin(currentText, true);
   };
 
   const focusCodeInput = () => {
     codeInputRef.current?.focus();
   };
 
-  const onPressByLogin = async () => {
-    if (submitting) {
+  const onPressByLogin = async (codeOverride?: string, isAutoSubmit: boolean = false) => {
+    if (submittingRef.current || navigatingRef.current) {
       return;
     }
+
+    const codeToSubmit = codeOverride ?? smsCode;
 
     if (!normalizedPhone) {
       Alert.alert('手机号异常', '请返回重新输入手机号。');
       return;
     }
 
-    if (!canLogin) {
+    if (codeToSubmit.length !== 4) {
       Alert.alert('请输入验证码', '请填写完整的 4 位短信验证码。');
       return;
     }
 
-    setSubmitting(true);
-    MemberStore.requestSmsLogin(normalizedPhone, smsCode, loginToken, (success: boolean, message?: string) => {
-      setSubmitting(false);
+    if (isAutoSubmit) {
+      setAutoSubmitting(true);
+    }
+    setSubmittingState(true);
+    MemberStore.requestSmsLogin(normalizedPhone, codeToSubmit, loginToken, (success: boolean, message?: string) => {
       if(success) {
-        MemberStore.requestMemberInfo((data?:MemberInfoEntity) => {
-          console.log(data);
-          if(data) {
-            if(!isMemberInfoComplete(data)) {
-                navigation.replace('InitMemberInfoPage', {memberInfo: data});
-              }else {
-                //将当前的用户信息保存到本地
-                StorageUtil.setItem(CommonConstant.MEMBER_INFO, JSON.stringify(data));
-                navigation.replace('TabPage');
-              }
-          }else if(data === undefined) {
-            navigation.replace('LoginPage');
-          }
-        });
+        navigatingRef.current = true;
+        requestAndNavigateByOnboarding(navigation, 'LoginPage');
       }else {
+        setSubmittingState(false);
+        setAutoSubmitting(false);
         console.log("登录失败");
+        lastAutoSubmittedCodeRef.current = '';
         Alert.alert('登录失败', message || '请确认验证码后重试。');
       }
     });
@@ -189,11 +214,11 @@ export default () => {
           </View>
 
           {/** 下一步按钮 */}
-          <TouchableOpacity style={canLogin ? styles.loginButton : styles.unloginButton}
+          <TouchableOpacity style={isCodeComplete ? styles.loginButton : styles.unloginButton}
             activeOpacity={canLogin ? 0.7 : 1}
-            disabled={submitting}
-            onPress={onPressByLogin}>
-            {submitting ? <ActivityIndicator color="white" /> : <Text style={styles.loginText}>下一步</Text>}
+            disabled={submitting || autoSubmitting}
+            onPress={() => onPressByLogin()}>
+            {submitting && !autoSubmitting ? <ActivityIndicator color="white" /> : <Text style={styles.loginText}>下一步</Text>}
           </TouchableOpacity>
 
 
@@ -322,7 +347,7 @@ const styles = StyleSheet.create({
 
       forgetPasswordText: {
         fontSize: 12,
-        color: '#303080',
+        color: CommonColor.mainColorDeep,
       },
 
       loginButton: {
@@ -338,7 +363,7 @@ const styles = StyleSheet.create({
       unloginButton: {
         width: '100%',
         height: 48,
-        backgroundColor: '#dce7e6',
+        backgroundColor: BRAND_DISABLED_COLOR,
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 24,
@@ -426,7 +451,7 @@ const styles = StyleSheet.create({
         width: 64,
         height: 56,
         borderRadius: 14,
-        backgroundColor: '#e9f7f5',
+        backgroundColor: '#eef2ff',
         borderWidth: 1,
         borderColor: BRAND_COLOR,
         alignItems: 'center',
@@ -482,6 +507,6 @@ const commonStyles = StyleSheet.create({
 
     protocolText: {
       fontSize: 10,
-      color: '#1020ff'
+      color: BRAND_COLOR
     },
 })

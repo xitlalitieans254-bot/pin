@@ -3,6 +3,7 @@ import { StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-nativ
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { CommonColor } from '../../../common/CommonColor';
 
 type HeaderAction = {
   icon: string;
@@ -20,9 +21,9 @@ export default ({ title, actions = [], children }: Props) => {
 
   return (
     <LinearGradient
-      colors={['#bff3ef', '#fff4ee', '#ffffff']}
+      colors={CommonColor.headerGradient}
       start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0.86 }}
+      end={{ x: 1, y: 0.92 }}
       style={[styles.header, { paddingTop: insets.top + 8 }]}
     >
       <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
@@ -56,6 +57,8 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingHorizontal: 20,
     paddingBottom: 8,
+    borderBottomWidth: 0.5,
+    borderBottomColor: 'rgba(255, 255, 255, 0.72)',
   },
 
   titleRow: {
@@ -69,10 +72,10 @@ const styles = StyleSheet.create({
   title: {
     flex: 1,
     textAlign: 'left',
-    fontSize: 24,
-    lineHeight: 29,
+    fontSize: 23,
+    lineHeight: 28,
     fontWeight: '700',
-    color: '#0f1115',
+    color: '#10131a',
   },
 
   actions: {
@@ -83,15 +86,17 @@ const styles = StyleSheet.create({
   },
 
   iconButton: {
-    width: 36,
-    height: 36,
+    width: 34,
+    height: 34,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 8,
+    borderRadius: 17,
+    backgroundColor: 'rgba(255, 255, 255, 0.42)',
   },
 
   icon: {
-    fontSize: 28,
-    color: '#111111',
+    fontSize: 24,
+    color: '#151827',
   },
 });

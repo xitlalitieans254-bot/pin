@@ -21,9 +21,13 @@ export default class HomeStore {
         this.page = 1;
     }
 
-    requestLatestTest = async () => {
+    requestLatestTest = async (reset: boolean = false) => {
         if(this.refreshing) {
             return;
+        }
+
+        if (reset) {
+            this.page = 1;
         }
 
         try{
@@ -36,13 +40,16 @@ export default class HomeStore {
 
             const { data } = await ApiService.request('toutouWorkerList', params);
             
-            if(data?.data?.total > 0) {
+            const list = Array.isArray(data?.data?.list) ? data.data.list : [];
+            if(data?.data?.total > 0 || list.length > 0) {
                 if(this.page === 1) {
-                    this.jobList = data.data.list;
+                    this.jobList = list;
                 }else {
-                    this.jobList = [...this.jobList, ...(data.data.list)];
+                    this.jobList = [...this.jobList, ...list];
                 }
-                this.page = this.page + 1;
+                if (list.length > 0) {
+                    this.page = this.page + 1;
+                }
                 this.refreshing = false;
             }else {
                 if(this.page === 1) {

@@ -22,6 +22,21 @@ const {width:SCREEN_WIDTH} = Dimensions.get('window');
 
 const privateChatTableSql = "CREATE TABLE IF NOT EXISTS " + CommonConstant.IM_PRIVATE_CHAT_TABLE + " (id INTEGER PRIMARY KEY AUTOINCREMENT, content_id TEXT UNIQUE, owner_member_id TEXT, from_member_id TEXT, to_member_id TEXT, body TEXT);";
 const insertPrivateChatSql = "INSERT OR IGNORE INTO " + CommonConstant.IM_PRIVATE_CHAT_TABLE + " (content_id, owner_member_id, from_member_id, to_member_id, body) VALUES (?, ?, ?, ?, ?)";
+const DEFAULT_CHAT_AVATAR = 'https://tt-zhipin-oss.oss-cn-shenzhen.aliyuncs.com/image/default4.png';
+
+const safeParseJson = <T,>(text: unknown, fallback: T): T => {
+  if (typeof text !== 'string' || text.trim().length === 0) {
+    return fallback;
+  }
+
+  try {
+    return JSON.parse(text) as T;
+  } catch (error) {
+    return fallback;
+  }
+};
+
+const toIdString = (value: unknown) => String(value ?? '').trim();
 
 const getCounterpartMemberId = (chat: PrivateChatMessage, currentMemberId?: string) => {
   const fromMemberId = String(chat.data.fromMemberId);
@@ -52,7 +67,8 @@ export default observer(() => {
 
     StorageUtil.getItem(CommonConstant.MEMBER_INFO).then(data => {
       if (data !== null) {
-        currentMemberIdRef.current = String(JSON.parse(data).id);
+        const memberId = String(JSON.parse(data).id);
+        currentMemberIdRef.current = memberId;
       }
     });
 
@@ -118,7 +134,7 @@ export default observer(() => {
   }, []);
 
   const handleOpen = () => {
-    ChatWebSocket.login();
+    return ChatWebSocket.login();
   }
 
   const handleMessage = (message: any) => {
@@ -195,85 +211,102 @@ export default observer(() => {
 
     //首页职位item UI
     const renderItem = ({item, index}: {item:TalkEntity, index:number}) => {
-      const memberInfo = JSON.parse(item.fromMemberInfo);
+      const peerMemberId = toIdString(item.fromMemberId);
+      const memberInfo = safeParseJson<Record<string, any>>(item.fromMemberInfo, {});
+      const avatarUrl = String(memberInfo.avatar || DEFAULT_CHAT_AVATAR).trim();
+      const displayName = String(memberInfo.name || `用户${peerMemberId.slice(-4)}`);
+      const companyText = [memberInfo.companyAbbrName, memberInfo.jobTitle].filter(Boolean).join('·');
       const styles = StyleSheet.create({
         root: {
-          backgroundColor: 'white',
+          backgroundColor: CommonColor.zhipinBg,
           width: '100%',
           flexDirection: 'column',
-          paddingVertical: 5
+          paddingVertical: 2,
         },
 
         item: {
           width: SCREEN_WIDTH,
-          backgroundColor: 'white',
-          overflow: 'hidden'
+          backgroundColor: 'transparent',
+          overflow: 'hidden',
         },
 
         fourLine: {
           flexDirection: 'row', // 将子组件排列在一行
-          alignItems: 'center', // 垂直居中对齐
+          alignItems: 'flex-start', // 垂直居中对齐
           justifyContent: 'space-between', // 在容器中水平分散对齐
-          paddingHorizontal: 12,
-          paddingTop: 7,
-          paddingBottom: 6
+          paddingHorizontal: 18,
+          paddingTop: 12,
+          paddingBottom: 12
         },
 
         fourLineHR: {
           flexDirection: 'row',
           alignItems: 'center',
+          flex: 1,
+          paddingRight: 12,
         },
 
         fourLineHRAvatar: {
-          width: 40,
-          height: 40,
+          width: 46,
+          height: 46,
           resizeMode: 'cover',
-          borderRadius: 100
+          borderRadius: 23,
+          backgroundColor: '#eef2ff',
         },
 
         fourLineHRText:{
-          paddingLeft: 5,
+          paddingLeft: 10,
           flexDirection: 'row',
           alignItems: 'center',
         },
 
         fourLineName:{
-          fontSize: 13,
-          color: CommonColor.fontColor
+          fontSize: 15,
+          lineHeight: 20,
+          color: '#20232c',
+          fontWeight: '700',
         },
 
         fourLineCompanyAbbrName:{
-          fontSize: 11,
-          paddingLeft: 4
+          fontSize: 12,
+          lineHeight: 17,
+          paddingLeft: 6,
+          color: CommonColor.deepGrey,
         },
 
         fourLineHRReplyText:{
-          color: CommonColor.normalGrey,
-          fontSize: 11,
-          paddingLeft: 5,
-          paddingTop: 8
+          color: CommonColor.mainColor,
+          fontSize: 12,
+          lineHeight: 18,
+          paddingLeft: 10,
+          paddingTop: 5,
+          fontWeight: '600',
         },
 
         fourLineHRReplyText2: {
-          color: CommonColor.fontColor,
-          fontSize: 11,
+          color: CommonColor.deepGrey,
+          fontSize: 12,
+          lineHeight: 18,
           paddingLeft: 5,
-          paddingTop: 8
+          paddingTop: 5,
+          flex: 1,
         },
 
 
         messageTip: {
-          flexDirection: 'row'
+          flexDirection: 'row',
+          maxWidth: SCREEN_WIDTH - 112,
         },
 
 
         fourLineAddress: {
           flexDirection: 'row',
-          paddingBottom: 20
+          paddingTop: 2,
         },
 
         fourLineAddressInfo: {
-          fontSize: 10,
+          fontSize: 11,
+          lineHeight: 16,
           color: CommonColor.normalGrey
         },
 
@@ -289,12 +322,19 @@ export default observer(() => {
       return (
         <>
           <TouchableOpacity onPress={() => {
-            //跳转到职位详情页
+            if (!peerMemberId) {
+              return;
+            }
+
+            //跳转到聊天页
             navigation.push('ChatPage', {
-              memberId: item.fromMemberId,
-              avatar: memberInfo.avatar,
-              name: memberInfo.name,
-              jobTitle: memberInfo.jobTitle
+              memberId: peerMemberId,
+              fromMemberId: String(item.fromMemberId),
+              toMemberId: String(item.toMemberId),
+              avatar: avatarUrl,
+              name: displayName,
+              jobTitle: String(memberInfo.jobTitle || ''),
+              companyAbbrName: String(memberInfo.companyAbbrName || ''),
             });
 
           }} activeOpacity={1} style={styles.item} key={index}>
@@ -305,18 +345,18 @@ export default observer(() => {
 
                 <View style={styles.fourLineHR}>
                   {/* 头像 */}
-                  <Image style={styles.fourLineHRAvatar} source={{uri: memberInfo.avatar}}/>
+                  <Image style={styles.fourLineHRAvatar} source={{uri: avatarUrl}}/>
 
                   <View style={{flexDirection: 'column'}}>
                     {/* HR信息 */}
                     <View style={styles.fourLineHRText}>
-                      <Text style={styles.fourLineName}>{memberInfo.name}</Text>
-                      <Text style={styles.fourLineCompanyAbbrName}>{memberInfo.companyAbbrName  + "·" +  memberInfo.jobTitle}</Text>
+                      <Text style={styles.fourLineName}>{displayName}</Text>
+                      <Text style={styles.fourLineCompanyAbbrName}>{companyText}</Text>
                     </View>
 
                     <View style={styles.messageTip}>
                       <Text style={styles.fourLineHRReplyText}>[新招呼]</Text>
-                      <Text style={styles.fourLineHRReplyText2}>您好，我是负责TT公司招聘的X老板...</Text>
+                      <Text style={styles.fourLineHRReplyText2} numberOfLines={1}>您好，我是负责AI岗位招聘的顾问...</Text>
                     </View>
                   </View>
 
@@ -401,17 +441,18 @@ export default observer(() => {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#f4f5f7',
+    backgroundColor: CommonColor.zhipinBg,
   },
 
   flatList: {
     width: '100%',
     height: '100%',
-    backgroundColor: CommonColor.normalBg
+    backgroundColor: CommonColor.zhipinBg
   },
 
   container: {
-    paddingTop: 6
+    paddingTop: 9,
+    paddingBottom: 12,
   },
 
 });

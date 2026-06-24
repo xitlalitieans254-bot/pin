@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { CommonColor } from '../../../../common/CommonColor';
 
 type Props = { tab: number; onTabChanged:(tabIndex: number) => void; onAddButtonPress:any};
 
@@ -24,6 +25,7 @@ export default ({ tab, onTabChanged }: Props) => {
                     }}
                 >
                     <Text style={tabIndex === 0 ? styles.tabTextSelected : styles.tabText}>全部</Text>
+                    {tabIndex === 0 && <View style={styles.tabIndicator} />}
                 </TouchableOpacity>
 
                 {/** 标题栏-附近 */}
@@ -34,6 +36,7 @@ export default ({ tab, onTabChanged }: Props) => {
                     }}
                 >
                     <Text style={tabIndex === 1 ? styles.tabTextSelected : styles.tabText}>新招呼</Text>
+                    {tabIndex === 1 && <View style={styles.tabIndicator} />}
                 </TouchableOpacity>
             </View>
         </View>
@@ -61,20 +64,28 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: 28,
+        marginRight: 26,
     },
 
     tabText: {
-        color: '#5f636a',
-        fontSize: 15,
+        color: '#626875',
+        fontSize: 14,
         lineHeight: 20,
         fontWeight: '400',
     },
 
     tabTextSelected: {
-        color: '#111111',
+        color: '#10131a',
         fontSize: 15,
         lineHeight: 20,
         fontWeight: '800',
+    },
+
+    tabIndicator: {
+        width: 14,
+        height: 3,
+        borderRadius: 2,
+        backgroundColor: CommonColor.mainColor,
+        marginTop: 3,
     }
 });

@@ -901,3 +901,267 @@ android/app/src/main/assets/fonts/*
 3. 合并后重新安装依赖，重新执行 iOS Pods 安装，不要复用这台电脑的 `node_modules` 或 `ios/Pods`。
 4. 如果要长期维护，建议统一 Node 版本、npm/pnpm 策略、iOS bundle id、签名 Team 和 TestFlight 发布流程。
 5. 如果只是个人手机测试，用 Xcode 真机运行即可；如果要给多人测试，建议使用 Apple Developer Program + TestFlight。
+
+## 2026-06-17 最新补充
+
+最新提交：
+
+```text
+e32e0b8 feat: polish mobile UI and iOS install flow
+```
+
+这次提交主要是产品 UI 和真机测试流程优化：
+
+- 职位首页改成更接近 BOSS 直聘风格的职位卡片：顶部浅色渐变、较大的职位搜索标题、卡片式职位列表、薪资高亮、标签和招聘者信息优化。
+- 新增共享顶部组件 `src/pages/worker/components/GradientHeader.tsx`，并让“职位 / 发现 / 消息”三个主 Tab 顶部风格保持一致。
+- 优化底部 Tab 图标，替换掉不合适或容易显示异常的图标。
+- 修复 `FlowList` 中 `refreshing` 不是布尔值时可能触发 React Native 红屏的问题。
+- 优化手机号登录页和短信验证码页：品牌文案统一为 `AI智聘`，按钮样式改为品牌青绿色，验证码支持 iOS 一次性验证码自动填充，并增加 60 秒重新发送倒计时。
+- 全局替换剩余用户可见的 `TT直聘` 文案为 `AI智聘`。
+- 新增 `scripts/install-ios-device.sh`，并在 `package.json` 中增加真机安装命令：
+
+```bash
+npm run ios:device
+npm run ios:device:debug
+npm run ios:device:release
+npm run ios:device:install-release
+```
+
+当前固定真机测试配置：
+
+```text
+iPhone X / iOS 16.7.14
+UDID: 077b5a36726653ab02cada59c793c36dce9ad487
+Team ID: M79ZA43Q24
+Bundle ID: com.limei.ttzhipinapp
+```
+
+合并到大项目时建议优先看这些新增或重点变更文件：
+
+```text
+scripts/install-ios-device.sh
+package.json
+src/components/flowlist/FlowList.js
+src/pages/login/LoginPage.tsx
+src/pages/login/CheckSmsCaptchaPage.tsx
+src/pages/splash/SplashPage.tsx
+src/pages/worker/components/GradientHeader.tsx
+src/pages/worker/job/JobPage.tsx
+src/pages/worker/job/components/TitleBar.tsx
+src/pages/worker/discovery/DiscoveryPage.tsx
+src/pages/worker/message/MessagePage.tsx
+src/pages/worker/message/components/TitleBar.tsx
+src/pages/worker/TabPage.tsx
+src/pages/toutou/ToutouTabPage.tsx
+src/pages/worker/init/InitMemberInfoPage.tsx
+src/pages/worker/job/JobDetailPage.tsx
+```
+
+## 2026-06-17 Win 联调包合并补充
+
+本次又合并了 Win 电脑提供的 `ttZhipinApp-current-2026-06-17-6a79dd6.zip`。这份包基于后端联调进度，主要保留其中的职位接口和 IM 消息逻辑，同时保留 Mac 这边已经完成的 iOS UI、图标、登录体验和真机安装脚本。
+
+保留/合入的 Win 侧逻辑：
+
+- `src/apis/apis.ts` 新增 `nearbyList`、`latestList`，职位首页现在有推荐、附近、最新三个后端列表接口。
+- `src/stores/HomeStore.ts` 使用 `requestJobList(listType, reset)` 统一拉取推荐/附近/最新职位，并保留职位详情的安全 JSON 解析。
+- `src/pages/worker/job/JobPage.tsx` 三个 Tab 现在会分别请求推荐、附近、最新接口，不再只是展示占位页。
+- `src/pages/worker/job/JobDetailPage.tsx` 合入职位详情的后端兼容逻辑，并保留用户可见品牌文案 `AI智聘`。
+- `src/pages/worker/message/ChatPage.tsx`、`src/pages/worker/message/MessagePage.tsx`、`src/utils/WebSocketUtil.ts`、`src/stores/MessageStore.ts`、`src/stores/ChatWebSocket.ts` 合入 Win 侧 IM 修复，包括 WebSocket 重连/队列、离线消息入库、按当前用户区分会话归属等。
+- `typings.d.ts` 合入 IM 相关 Snowflake ID 类型，保证 TypeScript 能识别后端返回的大整数 ID。
+
+Mac 侧继续保留的内容：
+
+- `GradientHeader` 统一顶部渐变视觉；职位、发现、消息三个页面顶部风格一致。
+- iOS 真机安装脚本和 `npm run ios:device*` 命令继续保留。
+- 登录页、验证码页、App 图标、App 名称、底部 Tab 图标和职位卡片 UI 继续保留。
+
+已验证：
+
+```bash
+npx tsc --noEmit --pretty false
+git diff --check
+```
+
+合并建议：
+
+1. Win 大项目那边应优先以这次新的 zip/patch 为准，因为它已经同时包含 Mac UI 优化和 Win 后端联调逻辑。
+2. 合并时不要直接覆盖后端目录，只处理 React Native 前端目录。
+3. 如果 Win 那边后续又改了 JOB/IM 逻辑，应先比对这些文件再合并，避免把后端联调代码覆盖回旧版本。
+
+## 2026-06-24 阶段性存档补充
+
+本批次是在 6 月 17 日合并包之后继续做的前端优化和后端联调，主要集中在新用户引导、招聘方页面、IM 会话历史、聊天页 UI、真机安装流程。
+
+### 1. 求职者新用户引导
+
+重点文件：
+
+```text
+src/pages/onboarding/JobseekerOnboardingPage.tsx
+scripts/seed-onboarding-test-accounts.mjs
+```
+
+主要变化：
+
+- 继续优化“我要找工作”路径的多步骤填写流程。
+- 调整职位选择、最近一份工作选择等左右栏比例，让布局更接近参考截图。
+- 薪资、出生年月、首次工作时间、入职/离职时间、入学/毕业年份等滚轮选择去掉大的灰色背景，只保留选中行的轻量背景。
+- 首次参加工作时间为当年时，不再显示 `0年工作经验`，改为 `1年以内工作经验`。
+- 添加本地虚拟头像展示修复，避免头像区出现空白白底。
+- 新增测试账号批量补齐脚本，用于通过接口写入求职者/招聘方测试数据，便于在平台内验证展示效果。
+
+### 2. 招聘方页面和身份切换
+
+重点文件：
+
+```text
+src/pages/toutou/ToutouTabPage.tsx
+src/pages/toutou/toutou_mine/ToutouMinePage.tsx
+src/pages/toutou/toutou_search/ToutouSearchPage.tsx
+src/pages/toutou/toutou_worker/ToutouWorkerPage.tsx
+src/pages/worker/mine/BecomeBossPage.tsx
+src/pages/worker/mine/MinePage.tsx
+src/stores/ToutouWorkerStore.ts
+```
+
+主要变化：
+
+- 招聘方底部菜单调整为 `牛人 / 搜索 / 消息 / 我的`，不再显示“打工人”。
+- `牛人` 页面风格向求职端职位卡片靠齐，提升招聘方首页的完整度和信息密度。
+- 修复“我的”页右上角身份切换状态混乱的问题，避免当前求职者身份却提示招聘方状态。
+- 招聘方相关列表接口继续按后端 Long ID 字符串方式处理，避免 JS 安全整数精度问题。
+
+### 3. 职位详情立即沟通
+
+重点文件：
+
+```text
+src/apis/apis.ts
+src/pages/worker/job/JobDetailPage.tsx
+```
+
+主要变化：
+
+- 对接后端新增接口：
+
+```text
+POST /im/talk/private/ensure
+```
+
+- 职位详情页点击“立即沟通”时，先用职位里的 `memberId` 调用 `ensurePrivateTalk`。
+- 成功后优先使用接口返回的 `fromMemberId` 和 `fromMemberInfo` 跳转聊天页。
+- 后端 Long ID 均按字符串传递和保存，不做 `Number()` 转换。
+
+### 4. IM WebSocket 和历史消息
+
+重点文件：
+
+```text
+ios/ttZhipinApp/Info.plist
+src/utils/WebSocketUtil.ts
+src/stores/ChatWebSocket.ts
+src/stores/MemberStore.ts
+src/pages/worker/message/MessagePage.tsx
+src/pages/worker/message/ChatPage.tsx
+src/pages/worker/message/components/ChatTopMenu.tsx
+```
+
+主要变化：
+
+- WebSocket 测试环境地址调整为：
+
+```text
+ws://150.158.53.182:8080/ws
+```
+
+- iOS `Info.plist` 增加对应 ATS 例外，保证 iOS 可以访问该测试 WebSocket 地址。
+- WebSocket 打开后发送 IM 登录包 `command=1002`，发送私聊消息使用 `command=2001`。
+- 聊天详情页打开时不再只依赖本地 SQLite 或 `offline/list`，改为调用：
+
+```text
+POST /im/message/history/list
+```
+
+- 历史消息参数使用会话对象里的 `fromMemberId` 作为 `targetMemberId`，不再误传 `talk.id`。
+- 历史消息读取 `data.list`，消息内容字段读取 `messageContent`。
+- 登录后会缓存 `member_info`，聊天页本地缓存缺失时会再请求 `/member/api/member/info`，避免当前用户 ID 缺失导致消息方向判断错误。
+- 已通过接口验证：A 给 B 发消息后退出再进入，可以从历史接口拉回之前对话。
+
+### 5. 消息列表和聊天详情 UI
+
+重点文件：
+
+```text
+src/pages/worker/message/MessagePage.tsx
+src/pages/worker/message/ChatPage.tsx
+src/pages/worker/message/components/ChatTopMenu.tsx
+```
+
+主要变化：
+
+- 消息列表的人物行去掉卡片感和分割线，背景与页面一致。
+- 聊天详情页顶部删除渐变和白色色块，改成与聊天背景一致。
+- 原顶部的 `换电话 / 换微信 / 发简历 / 不感兴趣` 移到输入框上方，做成横向小胶囊按钮。
+- 底部输入框改为大胶囊结构：
+  - 左侧回形针，点击后打开文件选择器。
+  - 右侧默认麦克风图标。
+  - 输入文字后右侧切换为向上的发送箭头。
+- 回形针上传文件成功后，会把文件名和文件 URL 作为一条文本消息通过现有 IM 通道发送。
+- 修复 GiftedChat 默认只预留 44px 导致新输入区被底部裁掉的问题，现在显式设置输入区高度，并加入 iPhone 底部安全区。
+- 去掉底部输入区外层白色色块，只保留胶囊输入框本身。
+
+### 6. iOS 真机安装流程
+
+重点文件：
+
+```text
+scripts/install-ios-device.sh
+package.json
+```
+
+主要变化：
+
+- 保留固定 iPhone X 测试机安装流程。
+- 当前常用测试机：
+
+```text
+iPhone X / iOS 16.7.16
+UDID: 077b5a36726653ab02cada59c793c36dce9ad487
+Team ID: M79ZA43Q24
+Bundle ID: com.limei.ttzhipinapp
+```
+
+- 如果 `ios-deploy` 一开始识别不到手机，实际成功路径是：
+
+```bash
+launchctl kickstart -k system/com.apple.usbmuxd
+npx --yes ios-deploy --id 077b5a36726653ab02cada59c793c36dce9ad487 --detect --no-wifi --timeout 20
+npm run ios:device:install-release
+```
+
+### 7. 本批次已验证
+
+多次执行并通过：
+
+```bash
+npx tsc --noEmit --pretty false
+git diff --check
+```
+
+并多次安装到 iPhone X / iOS 16.7.16。安装成功标志为：
+
+```text
+InstallComplete
+```
+
+注意：自动启动仍可能被 iOS 提示开发者证书未信任拦截，但安装本身已成功，手动信任证书或手动打开 App 即可。
+
+### 8. 给 Win 合并时的建议
+
+这次 zip 建议作为“Mac 当前前端完整包”交给 Win 电脑的 AI 处理，不建议人工直接覆盖：
+
+1. 先让 Win 侧 AI 阅读 `CODEX_CHANGES.md` 的 2026-06-24 部分。
+2. 重点比对 `src/pages/worker/message/*`、`src/utils/WebSocketUtil.ts`、`src/stores/ChatWebSocket.ts`、`src/pages/onboarding/JobseekerOnboardingPage.tsx` 和 `src/pages/toutou/*`。
+3. 合并时仍然只处理 React Native 前端目录，不要覆盖后端目录。
+4. 不要把 Mac 的 `node_modules`、`ios/Pods`、构建产物发给 Win，zip 包里也会排除这些依赖和缓存。

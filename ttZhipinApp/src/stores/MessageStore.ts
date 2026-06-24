@@ -34,7 +34,7 @@ export default class MessageStore {
             };
 
             const { data } = await ApiService.request('talkList', params);
-            
+
             if(data?.data?.total > 0) {
                 if(this.page === 1) {
                     this.talkList = data.data.list;
@@ -52,12 +52,12 @@ export default class MessageStore {
                 }
             }
         }catch(error) {
-            
+
         }finally{
             this.refreshing = false;
         }
 
-        
+
     }
 
 

@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Dimensions, Image, ImageBackground } from 'react-native'
+import { Alert, StyleSheet, Text, View, Dimensions, Image, ImageBackground } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import HomeStore from '../../../stores/HomeStore';
 import { useLocalStore, observer } from 'mobx-react';
@@ -10,11 +10,13 @@ import { CommonColor } from '../../../common/CommonColor';
 import DetailTitleBar from './components/DetailTitleBar';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import ApiService from '../../../apis/ApiService';
 
 const DEFAULT_MEMBER_INFO = {
   avatar: 'https://shopzz.oss-cn-guangzhou.aliyuncs.com/other/a1.jpg',
   name: '招聘者',
   jobTitle: 'HR',
+  companyAbbrName: '',
 };
 
 const DEFAULT_COMPANY_LOGO = 'https://shopzz.oss-cn-guangzhou.aliyuncs.com/other/a1.jpg';
@@ -66,6 +68,7 @@ export default observer(() => {
 
   const [dataLoaded, setDataLoaded] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
+  const [ensuringTalk, setEnsuringTalk] = useState(false);
 
 
 
@@ -80,6 +83,45 @@ export default observer(() => {
 
   const toggleShowFullText = () => {
     setShowFullText(!showFullText);
+  };
+
+  const handleChatPress = async () => {
+    const toMemberId = jobEntity?.memberId ? String(jobEntity.memberId) : '';
+    if (!toMemberId) {
+      Alert.alert('无法发起沟通', '职位详情缺少招聘者 ID，请刷新后再试');
+      return;
+    }
+
+    if (ensuringTalk) {
+      return;
+    }
+
+    setEnsuringTalk(true);
+    try {
+      const { data } = await ApiService.request('ensurePrivateTalk', { toMemberId });
+      if (data?.code !== 0 || !data?.data) {
+        Alert.alert('无法发起沟通', data?.message || '会话创建失败，请稍后再试');
+        return;
+      }
+
+      const fallbackMemberInfo = safeParseJson(memberInfo, DEFAULT_MEMBER_INFO);
+      const ensuredTalk = data.data;
+      const ensuredMemberInfo = safeParseJson(ensuredTalk.fromMemberInfo, fallbackMemberInfo);
+
+      navigation.push('ChatPage', {
+        memberId: String(ensuredTalk.fromMemberId || toMemberId),
+        fromMemberId: String(ensuredTalk.fromMemberId || ''),
+        toMemberId: String(ensuredTalk.toMemberId || ''),
+        avatar: ensuredMemberInfo.avatar || fallbackMemberInfo.avatar || DEFAULT_MEMBER_INFO.avatar,
+        name: ensuredMemberInfo.name || fallbackMemberInfo.name || DEFAULT_MEMBER_INFO.name,
+        jobTitle: ensuredMemberInfo.jobTitle || fallbackMemberInfo.jobTitle || DEFAULT_MEMBER_INFO.jobTitle,
+        companyAbbrName: ensuredMemberInfo.companyAbbrName || fallbackMemberInfo.companyAbbrName || '',
+      });
+    } catch (error: any) {
+      Alert.alert('无法发起沟通', error?.response?.data?.message || error?.message || '网络异常，请稍后再试');
+    } finally {
+      setEnsuringTalk(false);
+    }
   };
 
   useEffect(() => {
@@ -610,7 +652,7 @@ export default observer(() => {
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <AntDesign name="Safety" color={CommonColor.mainColor} size={16}/>
 
-              <Text style={{ color: CommonColor.fontColor, fontSize: 14, fontWeight: 'bold', paddingLeft: 4 }}>AI智聘安全提示</Text>
+              <Text style={{ color: CommonColor.fontColor, fontSize: 14, fontWeight: 'bold', paddingLeft: 4 }}>TT安全提示</Text>
             </View>
           </View>
 
@@ -627,8 +669,6 @@ export default observer(() => {
 
     );
   }
-
-  const parsedMemberInfo = safeParseJson(memberInfo, DEFAULT_MEMBER_INFO);
 
   return (
 
@@ -717,20 +757,8 @@ export default observer(() => {
           </ScrollView>
 
           <View style={styles.buttonContainer}>
-            <TouchableOpacity activeOpacity={1} style={[styles.button, { width: buttonWidth }]} onPress={() => {
-                if (!jobEntity?.memberId) {
-                  return;
-                }
-
-                //跳转到聊天页
-                navigation.push('ChatPage', {
-                  memberId: jobEntity.memberId,
-                  avatar: parsedMemberInfo.avatar || DEFAULT_MEMBER_INFO.avatar,
-                  name: parsedMemberInfo.name || DEFAULT_MEMBER_INFO.name,
-                  jobTitle: parsedMemberInfo.jobTitle || DEFAULT_MEMBER_INFO.jobTitle
-                });
-            }}>
-              <Text style={styles.buttonText}>立即沟通</Text>
+            <TouchableOpacity activeOpacity={1} style={[styles.button, { width: buttonWidth }]} onPress={handleChatPress}>
+              <Text style={styles.buttonText}>{ensuringTalk ? '连接中...' : '立即沟通'}</Text>
             </TouchableOpacity>
           </View>
         </>

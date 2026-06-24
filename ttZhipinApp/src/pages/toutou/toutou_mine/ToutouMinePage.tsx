@@ -3,13 +3,13 @@ import React, { Component, useEffect, useState, useRef } from 'react'
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { observer, useLocalStore } from 'mobx-react';
+import LinearGradient from 'react-native-linear-gradient';
 
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 import { Modal } from 'react-native';
 
-import mine_bg from '../../../assets/images/mine_bg2.jpg';
 import star_bg from '../../../assets/images/star_bg.png';
 import { ImageBackground } from 'react-native';
 import StorageUtil from '../../../utils/StorageUtil';
@@ -18,6 +18,7 @@ import MineStore from '../../../stores/MineStore';
 import { CommonColor } from '../../../common/CommonColor';
 import MenuBar from '../../../components/MenuBar';
 import Icon from 'react-native-vector-icons/Ionicons';
+import MineSideMenu, { MineSideMenuRef } from '../../worker/mine/components/MineSideMenu';
 
  
 
@@ -32,6 +33,7 @@ export default observer(() => {
   const store = useLocalStore(() => new MineStore());
 
   const navigation = useNavigation<StackNavigationProp<any>>();
+  const mineSideMenuRef = useRef<MineSideMenuRef>(null);
 
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -85,16 +87,20 @@ export default observer(() => {
       <View style={buttonStyles.titleLayout}>
                
         <View style={{ flex: 1 }} />
-        <Ionicons name="swap-horizontal-outline" size={18} color={'white'} onPress={() => {
-          navigation.navigate('BecomeBossPage', {'is_toutou': store.memberInfo.isToutou, 'page':'MinePage' })
+        <Ionicons name="swap-horizontal-outline" size={18} color={CommonColor.fontColor} onPress={() => {
+          navigation.navigate('BecomeBossPage', {
+            is_toutou: store.memberInfo.isToutou,
+            current_role: 'BOSS',
+            page: 'ToutouMinePage',
+          })
         }} />
-        <Ionicons style={{paddingLeft: 10}} name="scan-outline" size={18} color={'white'} onPress={() => {
+        <Ionicons style={{paddingLeft: 10}} name="scan-outline" size={18} color={CommonColor.fontColor} onPress={() => {
 
         }} />
 
-        
-        <Ionicons style={{paddingLeft: 10}} name="menu-outline" size={18} color={'white'} onPress={() => {
 
+        <Ionicons style={{paddingLeft: 10}} name="menu-outline" size={18} color={CommonColor.fontColor} onPress={() => {
+          mineSideMenuRef.current?.show();
         }} />
       </View>
     );
@@ -115,14 +121,14 @@ export default observer(() => {
             resizeMode: 'cover',
             borderRadius: 48,
             borderWidth: 1,
-            borderColor: 'white'
+            borderColor: 'rgba(255, 255, 255, 0.9)'
         },
         nameLayout: {
             marginLeft: 18,
         },
         nicknameText: {
             fontSize: 18,
-            color: 'white',
+            color: CommonColor.fontColor,
             fontWeight: 'bold',
         },
         idLayout: {
@@ -133,7 +139,7 @@ export default observer(() => {
         },
         idText: {
             fontSize: 12,
-            color: 'white',
+            color: CommonColor.deepGrey,
             paddingRight: 2
         }
     });
@@ -156,7 +162,7 @@ export default observer(() => {
                   <Text style={styles.idText}>在线简历</Text>
                                             
                   {/** 二维码logo */}
-                  <Ionicons name="create-outline" size={12} color="white"/>
+                  <Ionicons name="create-outline" size={12} color={CommonColor.deepGrey}/>
               </View>
           </View>
         </View>
@@ -803,11 +809,11 @@ export default observer(() => {
 
         <View style={styles.customMenuLayout}>
           <View style={{flexDirection: 'column', flex:1, alignItems: 'center'}}>
-            <TouchableOpacity onPress={() => { navigation.push("OnlineResumePage") }} style={{alignItems: 'center'}}>
+            <TouchableOpacity onPress={() => { navigation.push("BossJobListPage") }} style={{alignItems: 'center'}}>
               <Icon style={styles.functionIcon} name='newspaper'/>
-              <Text style={styles.mainTitle}>招聘数据</Text>
+              <Text style={styles.mainTitle}>我的职位</Text>
             </TouchableOpacity>
-            
+
           </View>
 
           <View style={{flexDirection: 'column', flex:1, alignItems: 'center'}}>
@@ -823,8 +829,10 @@ export default observer(() => {
           </View>
 
           <View style={{flexDirection: 'column', flex:1, alignItems: 'center'}}>
-            <Icon style={styles.functionIcon} name='game-controller-sharp'/>
-            <Text style={styles.mainTitle}>公司主页</Text>
+            <TouchableOpacity onPress={() => { navigation.push("CompanyProfilePage") }} style={{alignItems: 'center'}}>
+              <Icon style={styles.functionIcon} name='business-outline'/>
+              <Text style={styles.mainTitle}>企业资料</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -1028,7 +1036,12 @@ export default observer(() => {
     <View style={styles.root}>
       <StatusBar translucent backgroundColor={'transparent'} />
 
-      <Image style={[styles.bgImg, { height: bgImgHeight + 128 }]} source={mine_bg} />
+      <LinearGradient
+        colors={CommonColor.headerGradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0.95 }}
+        style={[styles.bgGradient, { height: Math.max(bgImgHeight + 188, 300) }]}
+      />
 
       {/** 头部个人信息 */}
       {renderHeadButton()}
@@ -1069,6 +1082,7 @@ export default observer(() => {
           </View>
         </View>
       </Modal>
+      <MineSideMenu ref={mineSideMenuRef} />
     </View>
   );
 });
@@ -1080,11 +1094,10 @@ const styles = StyleSheet.create({
     alignContent: 'center',
     alignItems: 'center'
   },
-  bgImg: {
+  bgGradient: {
     position: 'absolute',
     top: 0,
     width: '100%',
-    height: 600,
   },
   scrollView: {
     width: '100%',

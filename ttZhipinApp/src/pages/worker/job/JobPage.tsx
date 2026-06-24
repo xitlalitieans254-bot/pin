@@ -25,13 +25,9 @@ type RecruiterInfo = {
   jobTitle?: string;
 };
 
-const parseJson = <T,>(value: any, fallback: T): T => {
+const parseJson = <T,>(value: string | undefined, fallback: T): T => {
   if (!value) {
     return fallback;
-  }
-
-  if (typeof value !== 'string') {
-    return value;
   }
 
   try {
@@ -127,19 +123,6 @@ export default observer(() => {
     return <Text style={styles.footerText}>已经滑到底部了</Text>;
   };
 
-  const renderEmpty = () => {
-    if (store.refreshing) {
-      return null;
-    }
-
-    return (
-      <View style={styles.emptyState}>
-        <Text style={styles.emptyTitle}>{store.errorMessage || '暂无职位'}</Text>
-        <Text style={styles.emptyText}>换个条件看看，或稍后再刷新。</Text>
-      </View>
-    );
-  };
-
   const renderJobCard = ({ item }: { item: JobEntity; index: number }) => {
     const recruiter = parseJson<RecruiterInfo>(item.memberInfo, {});
     const tags = buildTags(item);
@@ -219,7 +202,6 @@ export default observer(() => {
         onRefresh={onJobRefresh}
         onEndReachedThreshold={0.2}
         onEndReached={loadData}
-        ListEmptyComponent={renderEmpty}
         ListFooterComponent={renderFooter}
       />
     );
@@ -240,7 +222,7 @@ export default observer(() => {
         ]}
       >
         <TitleBar
-          tab={index}
+          tab={0}
           city="厦门"
           onAddButtonPress={(event: GestureResponderEvent) => {}}
           onTabChanged={handleTabChanged}
@@ -255,23 +237,23 @@ export default observer(() => {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#f4f5f7',
+    backgroundColor: CommonColor.zhipinBg,
   },
 
   flatList: {
     flex: 1,
     width: '100%',
-    backgroundColor: '#f4f5f7',
+    backgroundColor: CommonColor.zhipinBg,
   },
 
   listContainer: {
-    paddingTop: 10,
+    paddingTop: 9,
     paddingBottom: 14,
   },
 
   card: {
     width: CARD_WIDTH,
-    minHeight: 150,
+    minHeight: 154,
     backgroundColor: '#ffffff',
     marginHorizontal: CARD_HORIZONTAL_MARGIN,
     marginBottom: 10,
@@ -279,11 +261,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 15,
-    shadowColor: '#19202a',
+    shadowColor: '#34356a',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
+    shadowOpacity: 0.055,
+    shadowRadius: 12,
     elevation: 1,
+    borderWidth: 0.5,
+    borderColor: 'rgba(91, 95, 244, 0.06)',
   },
 
   titleRow: {
@@ -294,15 +278,15 @@ const styles = StyleSheet.create({
 
   jobName: {
     flex: 1,
-    color: '#111111',
+    color: '#10131a',
     fontSize: 17,
     lineHeight: 23,
-    fontWeight: '600',
+    fontWeight: '700',
     paddingRight: 12,
   },
 
   salary: {
-    color: '#0aa7a0',
+    color: CommonColor.salaryColor,
     fontSize: 16,
     lineHeight: 24,
     fontWeight: '700',
@@ -310,7 +294,7 @@ const styles = StyleSheet.create({
 
   companyInfo: {
     marginTop: 8,
-    color: '#666a70',
+    color: CommonColor.deepGrey,
     fontSize: 13,
     lineHeight: 18,
   },
@@ -325,8 +309,8 @@ const styles = StyleSheet.create({
 
   tag: {
     maxWidth: CARD_WIDTH - 42,
-    backgroundColor: '#f4f4f4',
-    borderRadius: 3,
+    backgroundColor: CommonColor.tagBg,
+    borderRadius: 5,
     paddingHorizontal: 8,
     paddingVertical: 5,
     marginRight: 8,
@@ -334,7 +318,7 @@ const styles = StyleSheet.create({
   },
 
   tagText: {
-    color: '#61656b',
+    color: '#5d6372',
     fontSize: 12,
     lineHeight: 15,
   },
@@ -365,7 +349,7 @@ const styles = StyleSheet.create({
     height: 30,
     borderRadius: 15,
     resizeMode: 'cover',
-    backgroundColor: '#edf2f7',
+    backgroundColor: '#eef2ff',
   },
 
   avatarFallback: {
@@ -374,11 +358,11 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#d9f3f0',
+    backgroundColor: '#eef2ff',
   },
 
   avatarFallbackText: {
-    color: '#0aa7a0',
+    color: CommonColor.mainColor,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -387,7 +371,7 @@ const styles = StyleSheet.create({
     width: 9,
     height: 9,
     borderRadius: 6,
-    backgroundColor: '#52d641',
+    backgroundColor: CommonColor.mainColorViolet,
     borderWidth: 1.5,
     borderColor: '#ffffff',
     position: 'absolute',
@@ -401,14 +385,14 @@ const styles = StyleSheet.create({
   },
 
   recruiterName: {
-    color: '#2f3338',
+    color: '#252936',
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '500',
   },
 
   replyText: {
-    color: '#8b8f96',
+    color: CommonColor.normalGrey,
     fontSize: 11,
     lineHeight: 15,
     marginTop: 1,
@@ -424,13 +408,13 @@ const styles = StyleSheet.create({
 
   addressText: {
     flexShrink: 1,
-    color: '#8b8f96',
+    color: CommonColor.normalGrey,
     fontSize: 11,
     lineHeight: 15,
   },
 
   closeIcon: {
-    color: '#c5c8cc',
+    color: '#b8bdc9',
     fontSize: 17,
     marginLeft: 7,
   },
@@ -442,27 +426,5 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 24,
     fontSize: 12,
-  },
-
-  emptyState: {
-    minHeight: 260,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 28,
-  },
-
-  emptyTitle: {
-    color: '#30343a',
-    fontSize: 15,
-    fontWeight: '700',
-    lineHeight: 21,
-  },
-
-  emptyText: {
-    color: '#8b8f96',
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: 6,
-    textAlign: 'center',
   },
 });

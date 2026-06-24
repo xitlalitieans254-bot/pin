@@ -2,7 +2,7 @@ import { Buffer } from 'buffer';
 
 
 class WebSocketUtils {
-    private socketUrl: string = "wss://zhao.zkgj.chat/ws/";
+    private socketUrl: string = "ws://150.158.53.182:8080/ws";
     private socket: WebSocket | null = null;
     private listeners: { eventType: string; callback: Function }[] = [];
     private pendingPackets: any[] = [];
@@ -19,10 +19,10 @@ class WebSocketUtils {
         this.socket = new WebSocket(url);
         this.socket.binaryType = 'arraybuffer';
 
-        this.socket.onopen = () => {
+        this.socket.onopen = async () => {
             console.log('WebSocket connected');
+            await this.notifyListenersAsync('open');
             this.flushPendingPackets();
-            this.notifyListeners('open');
         };
 
         this.socket.onmessage = (event) => {
@@ -102,6 +102,14 @@ class WebSocketUtils {
                 listener.callback(data);
             }
         });
+    }
+
+    private async notifyListenersAsync(eventType: string, data?: any) {
+        const callbacks = this.listeners
+            .filter(listener => listener.eventType === eventType)
+            .map(listener => Promise.resolve(listener.callback(data)));
+
+        await Promise.all(callbacks);
     }
 
     close() {

@@ -1276,6 +1276,6 @@ const commonStyles = StyleSheet.create({
 
     protocolText: {
       fontSize: 10,
-      color: '#1020ff'
+      color: CommonColor.mainColor
     },
 })

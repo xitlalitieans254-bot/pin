@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, Modal, TouchableHighlight, TouchableOpacity } from 'react-native';
+import { ActivityIndicator, Alert, View, Text, StyleSheet, ScrollView, Dimensions, Modal, TouchableHighlight, TouchableOpacity } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import { Image } from 'react-native';
 import { observer, useLocalStore } from 'mobx-react';
@@ -15,22 +15,31 @@ import AttachmentResumeStore from '../../../stores/AttachmentResumeStore';
 import TtDivider from '../../../components/ttDivider';
 
 import become_boss_png from '../../../assets/images/become-boss.png';
+import BossStore from '../../../stores/BossStore';
+import { isCompanyInfoComplete } from '../../../utils/CompanyInfoUtil';
+import OnboardingStore from '../../../stores/OnboardingStore';
+import { requestAndNavigateByOnboarding } from '../../../utils/OnboardingNavigationUtil';
 
 
 export default observer(() => {
 
 
   const store = useLocalStore(() => new AttachmentResumeStore());
+  const bossStore = useLocalStore(() => new BossStore());
+  const onboardingStore = useLocalStore(() => new OnboardingStore());
 
   const navigation = useNavigation<StackNavigationProp<any>>();
   const insets = useSafeAreaInsets();
 
   const { params } = useRoute<any>();
-  const isToutou = Number(params?.is_toutou) === 1;
-  const sourcePage = params?.page;
+  const currentRole = params?.current_role === 'BOSS' || params?.page === 'ToutouMinePage'
+    ? 'BOSS'
+    : 'JOBSEEKER';
+  const isBossRole = currentRole === 'BOSS';
 
 
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [switching, setSwitching] = useState(false);
   
   useEffect(() => {
     store.requestOnlineResumeInfo().then(res => {
@@ -314,25 +323,60 @@ export default observer(() => {
 
         <Image style={styles.becomeBossImg} source={become_boss_png}/>
 
-        <Text style={styles.tips}>{"你当前的身份是" + (isToutou ? '“头头”' : '“打工仔”')}</Text>
+        <Text style={styles.tips}>{"你当前的身份是" + (isBossRole ? '“招聘方”' : '“求职者”')}</Text>
 
-        <TouchableOpacity style={styles.button2} activeOpacity={0.9}  onPress={() => {
-            // 如果是打工仔页面跳转过来的
-            if(sourcePage === 'MinePage') {
-                // 判断用户是打工仔身份需要调用成为头头的接口后再跳转到头头页面
-                if(!isToutou) {
-                    // TODO 调用接口
+        <TouchableOpacity style={styles.button2} activeOpacity={switching ? 1 : 0.9}  onPress={async () => {
+            if (switching) {
+              return;
+            }
+
+            setSwitching(true);
+            try {
+              if (isBossRole) {
+                const res = await onboardingStore.selectRole('JOBSEEKER');
+                if (res?.code !== 0) {
+                  Alert.alert('切换失败', res?.message || '暂时无法切换为求职者');
+                  return;
                 }
-                navigation.navigate('ToutouTabPage');
-            }else {
-                navigation.navigate('TabPage');
+
+                await requestAndNavigateByOnboarding(navigation, 'TabPage');
+                return;
+              }
+
+              const res = await bossStore.becomeBoss();
+              if (res?.code !== 0) {
+                Alert.alert('切换失败', res?.message || '暂时无法切换为招聘方');
+                return;
+              }
+
+              const companyRes = await bossStore.requestMyCompany();
+              if (companyRes?.code !== 0) {
+                Alert.alert('企业资料加载失败', companyRes?.message || '暂时无法进入招聘方首页');
+                return;
+              }
+
+              const companyInfo = companyRes?.data || {};
+              if (!isCompanyInfoComplete(companyInfo)) {
+                navigation.replace('CompanyProfilePage', { companyInfo, next: 'ToutouTabPage' });
+                return;
+              }
+
+              navigation.replace('ToutouTabPage');
+            } catch (error: any) {
+              Alert.alert('切换失败', error?.response?.data?.message || error?.message || '网络异常，请稍后重试');
+            } finally {
+              setSwitching(false);
             }
             
 
 
 
         }}>
-            <Text style={styles.buttonText2}>{"切换为" + (!isToutou ? '“头头”' : '“打工仔”') + "身份"}</Text>
+            {switching ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text style={styles.buttonText2}>{"切换为" + (!isBossRole ? '“招聘方”' : '“求职者”') + "身份"}</Text>
+            )}
         </TouchableOpacity>
 
         

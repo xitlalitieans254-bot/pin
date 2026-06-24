@@ -109,6 +109,14 @@ class MemberStore {
 
                 this.token = token;
                 yield StorageUtil.setItem(CommonConstant.TOKEN, token);
+                try {
+                    const memberInfoRes = yield ApiService.request('memberInfo');
+                    if (memberInfoRes?.data?.code === 0 && memberInfoRes.data.data) {
+                        yield StorageUtil.setItem(CommonConstant.MEMBER_INFO, JSON.stringify(memberInfoRes.data.data));
+                    }
+                } catch (error) {
+                    console.log('cache member info failed', error);
+                }
                 callback?.(true);
             } else {
                 this.token = null;
@@ -162,6 +170,7 @@ class MemberStore {
             const { data } = yield ApiService.request('memberInfo');
             if (data) {
                 if(data.code === 0) {
+                    yield StorageUtil.setItem(CommonConstant.MEMBER_INFO, JSON.stringify(data.data));
                     callback?.(data.data);
                 }else {
                     callback?.(undefined);

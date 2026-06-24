@@ -9,6 +9,9 @@ import SplashPage from './src/pages/splash/SplashPage';
 import LoginPage from './src/pages/login/LoginPage';
 import CheckSmsCaptchaPage from './src/pages/login/CheckSmsCaptchaPage';
 import TabPage from './src/pages/worker/TabPage';
+import OnboardingRolePage from './src/pages/onboarding/OnboardingRolePage';
+import JobseekerOnboardingPage from './src/pages/onboarding/JobseekerOnboardingPage';
+import BossOnboardingPage from './src/pages/onboarding/BossOnboardingPage';
 
 import JobPage from './src/pages/worker/job/JobPage';
 import DiscoveryPage from './src/pages/worker/discovery/DiscoveryPage';
@@ -28,6 +31,8 @@ import ToutouTabPage from './src/pages/toutou/ToutouTabPage';
 import ToutouMinePage from './src/pages/toutou/toutou_mine/ToutouMinePage';
 import ToutouSearchPage from './src/pages/toutou/toutou_search/ToutouSearchPage';
 import ToutouWorkerPage from './src/pages/toutou/toutou_worker/ToutouWorkerPage';
+import BossJobListPage from './src/pages/toutou/bossJob/BossJobListPage';
+import CompanyProfilePage from './src/pages/toutou/company/CompanyProfilePage';
 
 
 
@@ -51,6 +56,9 @@ function App(): JSX.Element {
           <Stack.Screen options={{headerShown: false}} name='SplashPage' component={SplashPage}/>
           <Stack.Screen options={{headerShown: false}} name='LoginPage' component={LoginPage}/>
           <Stack.Screen options={{headerShown: false}} name='CheckSmsCaptchaPage' component={CheckSmsCaptchaPage}/>
+          <Stack.Screen options={{headerShown: false}} name='OnboardingRolePage' component={OnboardingRolePage}/>
+          <Stack.Screen options={{headerShown: false}} name='JobseekerOnboardingPage' component={JobseekerOnboardingPage}/>
+          <Stack.Screen options={{headerShown: false}} name='BossOnboardingPage' component={BossOnboardingPage}/>
           <Stack.Screen options={{headerShown: false}} name='TabPage' component={TabPage}/>
           <Stack.Screen options={{headerShown: false}} name='JobPage' component={JobPage}/>
           <Stack.Screen options={{headerShown: false}} name='JobDetailPage' component={JobDetailPage}/>
@@ -74,6 +82,8 @@ function App(): JSX.Element {
           <Stack.Screen options={{headerShown: false}} name='ToutouMinePage' component={ToutouMinePage}/>
           <Stack.Screen options={{headerShown: false}} name='ToutouSearchPage' component={ToutouSearchPage}/>
           <Stack.Screen options={{headerShown: false}} name='ToutouWorkerPage' component={ToutouWorkerPage}/>
+          <Stack.Screen options={{headerShown: false}} name='BossJobListPage' component={BossJobListPage}/>
+          <Stack.Screen options={{headerShown: false}} name='CompanyProfilePage' component={CompanyProfilePage}/>
 
         </Stack.Navigator>
       </NavigationContainer>

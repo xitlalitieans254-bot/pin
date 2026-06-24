@@ -130,7 +130,7 @@ export default class HomeStore {
                 this.jobDetail = data.data;
                 this.memberInfo = parseJsonObject(this.jobDetail.memberInfo);
             }else {
-                this.jobDetail = {};
+                this.jobDetail = {} as JobEntity;
                 this.memberInfo = {};
             }
         }catch(error) {
@@ -139,7 +139,7 @@ export default class HomeStore {
             this.detailRefreshing = false;
         }
 
-        
+
     }
 
     //@ts-ignore
@@ -161,7 +161,7 @@ export default class HomeStore {
                 this.memberInfo = parseJsonObject(data.data.memberInfo);
                 callback?.(data.data);
             } else {
-                this.jobDetail = {};
+                this.jobDetail = {} as JobEntity;
                 this.memberInfo = {};
                 callback?.(undefined);
             }

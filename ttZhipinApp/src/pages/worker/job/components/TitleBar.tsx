@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { CommonColor } from '../../../../common/CommonColor';
 
 type Props = {
   tab: number;
@@ -37,6 +38,7 @@ export default ({ tab, city = '厦门', onTabChanged }: Props) => {
               onPress={() => onPressTab(currentIndex)}
             >
               <Text style={selected ? styles.tabTextSelected : styles.tabText}>{label}</Text>
+              {selected && <View style={styles.tabIndicator} />}
             </TouchableOpacity>
           );
         })}
@@ -76,21 +78,29 @@ const styles = StyleSheet.create({
     height: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 28,
+    marginRight: 26,
   },
 
   tabText: {
-    color: '#5f636a',
-    fontSize: 15,
+    color: '#626875',
+    fontSize: 14,
     lineHeight: 20,
     fontWeight: '400',
   },
 
   tabTextSelected: {
-    color: '#111111',
+    color: '#10131a',
     fontSize: 15,
     lineHeight: 20,
     fontWeight: '800',
+  },
+
+  tabIndicator: {
+    width: 14,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: CommonColor.mainColor,
+    marginTop: 3,
   },
 
   filters: {
@@ -105,20 +115,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(246, 246, 246, 0.96)',
-    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.66)',
+    borderRadius: 8,
     paddingHorizontal: 8,
     marginLeft: 8,
+    borderWidth: 0.5,
+    borderColor: 'rgba(91, 95, 244, 0.10)',
   },
 
   filterText: {
-    color: '#565b62',
+    color: '#4f5563',
     fontSize: 13,
     lineHeight: 17,
   },
 
   filterIcon: {
-    color: '#c5c8cc',
+    color: '#9aa1b0',
     fontSize: 10,
     marginLeft: 4,
     marginTop: 1,
