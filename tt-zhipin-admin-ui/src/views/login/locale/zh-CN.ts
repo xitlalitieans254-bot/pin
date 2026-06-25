@@ -12,11 +12,11 @@ export default {
   'login.form.register': '注册账号',
   'login.form.captcha.placeholder': '请输入验证码',
 
-  'login.banner.slogan1': '企业头头与打工仔直接在线开聊',
-  'login.banner.subSlogan1': '让你跟冷冰冰的简历投递说再见',
-  'login.banner.slogan2': '中外各大企业',
+  'login.banner.slogan1': '招聘管理一站完成',
+  'login.banner.subSlogan1': '企业、职位、候选人和会话统一管理',
+  'login.banner.slogan2': 'AI智聘管理后台',
   'login.banner.subSlogan2': '都在用AI智聘招人',
-  'login.banner.slogan3': '去除中间商赚差价的环节',
-  'login.banner.subSlogan3': '简历+行为数据匹配等方式提升你找工作效率',
+  'login.banner.slogan3': '实时掌握平台运营',
+  'login.banner.subSlogan3': '简历、岗位、用户和沟通数据清晰可追踪',
 
 };
