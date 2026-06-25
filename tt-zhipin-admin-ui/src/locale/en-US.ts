@@ -18,7 +18,7 @@ export default {
   'menu.result': 'Result',
   'menu.profile': 'Profile',
   'menu.user': 'User Center',
-  'menu.github': 'Github',
+  'menu.github': 'Repository',
   'navbar.docs': 'Docs',
   'navbar.action.locale': 'Switch to English',
   

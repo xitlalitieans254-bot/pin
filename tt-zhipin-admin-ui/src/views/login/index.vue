@@ -1,11 +1,8 @@
 <template>
   <div class="container">
     <div class="logo">
-      <img
-        alt="logo"
-        src="//p3-armor.byteimg.com/tos-cn-i-49unhts6dw/dfdba5317c0c20ce20e64fac803d52bc.svg~tplv-49unhts6dw-image.image"
-      />
-      <div class="logo-text">tt-zhipin</div>
+      <div class="logo-mark">AI</div>
+      <div class="logo-text">AI智聘</div>
     </div>
     <LoginBanner />
     <div class="content">
@@ -61,10 +58,24 @@
     align-items: center;
 
     &-text {
-      margin-right: 4px;
-      margin-left: 4px;
+      margin-left: 8px;
       color: var(--color-fill-1);
+      font-weight: 600;
       font-size: 20px;
+    }
+
+    &-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0;
+      background: #165dff;
+      border-radius: 8px;
     }
   }
 </style>

@@ -1,5 +1,5 @@
 export default {
-  'login.form.title': 'Login to tt-zhipin Admin',
+  'login.form.title': 'Login to AI Zhipin Admin',
   'login.form.userName.errMsg': 'Username cannot be empty',
   'login.form.password.errMsg': 'Password cannot be empty',
   'login.form.login.errMsg': 'Login error, refresh and try again',
@@ -10,13 +10,13 @@ export default {
   'login.form.forgetPassword': 'Forgot password',
   'login.form.login': 'login',
   'login.form.register': 'register account',
-  'login.banner.slogan1': 'Out-of-the-box high-quality template',
+  'login.banner.slogan1': 'Direct recruiting conversations',
   'login.banner.subSlogan1':
-    'Rich page templates, covering most typical business scenarios',
-  'login.banner.slogan2': 'Built-in solutions to common problems',
+    'Connect recruiters and candidates with less friction',
+  'login.banner.slogan2': 'AI Zhipin for hiring teams',
   'login.banner.subSlogan2':
-    'Internationalization, routing configuration, state management everything',
-  'login.banner.slogan3': 'Access visualization enhancement tool AUX',
-  'login.banner.subSlogan3': 'Realize flexible block development',
+    'Manage companies, jobs, resumes, and conversations in one console',
+  'login.banner.slogan3': 'Smarter job matching operations',
+  'login.banner.subSlogan3': 'Use profile and behavior data to improve matching efficiency',
   'login.form.captcha.placeholder': 'please enter verify code',
 };

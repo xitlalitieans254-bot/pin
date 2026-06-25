@@ -1,5 +1,5 @@
 export default {
-  'login.form.title': '登录 tt-zhipin',
+  'login.form.title': '登录 AI智聘管理后台',
   'login.form.userName.errMsg': '用户名不能为空',
   'login.form.password.errMsg': '密码不能为空',
   'login.form.login.errMsg': '登录出错，轻刷新重试',
@@ -15,7 +15,7 @@ export default {
   'login.banner.slogan1': '企业头头与打工仔直接在线开聊',
   'login.banner.subSlogan1': '让你跟冷冰冰的简历投递说再见',
   'login.banner.slogan2': '中外各大企业',
-  'login.banner.subSlogan2': '都在用TT直聘招人',
+  'login.banner.subSlogan2': '都在用AI智聘招人',
   'login.banner.slogan3': '去除中间商赚差价的环节',
   'login.banner.subSlogan3': '简历+行为数据匹配等方式提升你找工作效率',
 

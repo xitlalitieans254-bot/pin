@@ -1,9 +1,9 @@
 {
-  "name": "tt-zhipin-admin-ui",
-  "description": "tt-zhipin - 头头直聘管理后台",
+  "name": "ai-zhipin-admin-ui",
+  "description": "AI智聘管理后台",
   "version": "1.0.0",
   "private": true,
-  "author": "whoiszxl",
+  "author": "AI智聘",
   "license": "MIT",
   "scripts": {
     "dev": "vite --config ./config/vite.config.dev.ts",

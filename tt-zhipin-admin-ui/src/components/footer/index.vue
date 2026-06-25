@@ -1,5 +1,5 @@
 <template>
-  <a-layout-footer class="footer">tt-zhipin</a-layout-footer>
+  <a-layout-footer class="footer">AI智聘管理后台</a-layout-footer>
 </template>
 
 <script lang="ts" setup></script>

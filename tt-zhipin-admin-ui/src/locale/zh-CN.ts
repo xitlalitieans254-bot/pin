@@ -21,7 +21,7 @@ export default {
   'menu.exception': '异常页',
   'menu.form': '表单页',
   'menu.profile': '详情页',
-  'menu.github': 'Github',
+  'menu.github': '项目仓库',
   'navbar.docs': '文档中心',
   'navbar.action.locale': '切换为中文',
   ...localeSettings,

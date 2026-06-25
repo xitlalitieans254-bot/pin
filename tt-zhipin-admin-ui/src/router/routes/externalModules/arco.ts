@@ -1,5 +1,5 @@
 export default {
-  path: 'https://github.com/whoiszxl/tt-zhipin',
+  path: 'https://github.com/xitlalitieans254-bot/pin',
   name: 'github',
   meta: {
     locale: 'menu.github',
