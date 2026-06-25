@@ -28,6 +28,10 @@ public class WebConfiguration {
 
         corsConfiguration.addAllowedOrigin("http://127.0.0.1:5173");
         corsConfiguration.addAllowedOrigin("http://localhost:5173");
+        corsConfiguration.addAllowedOrigin("https://zhao.zkgj.chat");
+        corsConfiguration.addAllowedOrigin("http://zhao.zkgj.chat");
+        corsConfiguration.addAllowedOrigin("https://124.222.114.35");
+        corsConfiguration.addAllowedOrigin("http://124.222.114.35");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfiguration);
