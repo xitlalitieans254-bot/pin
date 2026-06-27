@@ -2,8 +2,11 @@ package com.whoiszxl.zhipin.member.controller;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import com.whoiszxl.zhipin.member.cqrs.command.AccountDeleteCommand;
 import com.whoiszxl.zhipin.member.cqrs.command.InitBaseInfoCommand;
 import com.whoiszxl.zhipin.member.cqrs.response.MemberInfoResponse;
+import com.whoiszxl.zhipin.member.cqrs.response.SubmitResultResponse;
+import com.whoiszxl.zhipin.member.service.IMemberAccountDeleteApplyService;
 import com.whoiszxl.zhipin.member.service.IMemberService;
 import com.whoiszxl.zhipin.tools.common.entity.ResponseResult;
 import com.whoiszxl.zhipin.tools.common.token.TokenHelper;
@@ -32,6 +35,8 @@ public class MemberApiController {
 
     private final IMemberService memberService;
 
+    private final IMemberAccountDeleteApplyService memberAccountDeleteApplyService;
+
     @Operation(summary = "获取会员基本信息", description = "获取会员基本信息")
     @GetMapping("/info")
     public ResponseResult<MemberInfoResponse> memberInfo() {
@@ -45,6 +50,18 @@ public class MemberApiController {
     public ResponseResult<Boolean> initBaseInfo(@RequestBody @Validated InitBaseInfoCommand initBaseInfoCommand) {
         memberService.initBaseInfo(initBaseInfoCommand);
         return ResponseResult.buildSuccess();
+    }
+
+    @Operation(summary = "Logout current member")
+    @PostMapping("/logout")
+    public ResponseResult<Boolean> logout() {
+        return ResponseResult.buildSuccess(memberAccountDeleteApplyService.logout());
+    }
+
+    @Operation(summary = "Apply to delete current member account")
+    @PostMapping("/account/delete")
+    public ResponseResult<SubmitResultResponse> applyAccountDelete(@RequestBody(required = false) AccountDeleteCommand command) {
+        return ResponseResult.buildSuccess(memberAccountDeleteApplyService.applyDelete(command));
     }
 
 }

@@ -7,3 +7,5 @@ databaseChangeLog:
       file: db/changelog/v1.1.0/zhipin-member-onboarding.sql
   - include:
       file: db/changelog/v1.2.0/zhipin-member-resume-refresh.sql
+  - include:
+      file: db/changelog/v1.3.0/zhipin-member-settings.sql
