@@ -11,6 +11,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,6 +29,9 @@ import java.net.InetAddress;
 @RequiredArgsConstructor
 @EnableSpringUtil
 @EnableScheduling
+@EnableFeignClients(basePackages = {
+        "com.whoiszxl.zhipin.job.feign"
+})
 @ComponentScan(basePackages = {"com.whoiszxl.zhipin.member.**", "com.whoiszxl.zhipin.tools.**"})
 public class MemberApplication implements ApplicationRunner {
 

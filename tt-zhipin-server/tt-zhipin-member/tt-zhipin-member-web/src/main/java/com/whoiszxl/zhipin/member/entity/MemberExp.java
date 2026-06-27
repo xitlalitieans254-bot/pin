@@ -48,6 +48,9 @@ public class MemberExp implements Serializable {
     @Schema(description = "Skill tags JSON array")
     private String skillTags;
 
+    @Schema(description = "Last online resume refresh time")
+    private LocalDateTime resumeRefreshTime;
+
     @Schema(description = "状态(0:无效 1:有效)")
     private Integer status;
 
