@@ -29,6 +29,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Collections;
@@ -43,6 +45,8 @@ public class OnlineResumeServiceImpl implements IOnlineResumeService {
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter MONTH_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM");
+    private static final ZoneId CHINA_ZONE = ZoneId.of("Asia/Shanghai");
 
     private final TokenHelper tokenHelper;
     private final IMemberService memberService;
@@ -113,7 +117,10 @@ public class OnlineResumeServiceImpl implements IOnlineResumeService {
     private OnlineResumeResponse buildResponse(Long memberId, Member member, MemberExp memberExp) {
         OnlineResumeResponse response = new OnlineResumeResponse();
         response.setMemberId(memberId);
-        response.setMemberInfoResponse(BeanUtil.copyProperties(member, MemberInfoResponse.class));
+        MemberInfoResponse memberInfoResponse = BeanUtil.copyProperties(member, MemberInfoResponse.class);
+        memberInfoResponse.setPassword(null);
+        memberInfoResponse.setToken(null);
+        response.setMemberInfoResponse(memberInfoResponse);
         response.setAvatar(StringUtils.defaultString(member.getAvatar()));
         response.setFullName(StringUtils.defaultString(member.getFullName()));
         response.setGender(member.getGender());
@@ -274,6 +281,8 @@ public class OnlineResumeServiceImpl implements IOnlineResumeService {
             if(StringUtils.isBlank(dto.getWorkDetail()) && StringUtils.isNotBlank(dto.getWorkContent())) {
                 dto.setWorkDetail(dto.getWorkContent());
             }
+            dto.setWorkDateStart(normalizeMonthText(dto.getWorkDateStart()));
+            dto.setWorkDateEnd(normalizeMonthText(dto.getWorkDateEnd()));
         }
         return list;
     }
@@ -298,6 +307,8 @@ public class OnlineResumeServiceImpl implements IOnlineResumeService {
             if(StringUtils.isBlank(dto.getProjectResult()) && StringUtils.isNotBlank(dto.getProjectContent())) {
                 dto.setProjectResult(dto.getProjectContent());
             }
+            dto.setProjectDateStart(normalizeMonthText(dto.getProjectDateStart()));
+            dto.setProjectDateEnd(normalizeMonthText(dto.getProjectDateEnd()));
         }
         return list;
     }
@@ -325,6 +336,23 @@ public class OnlineResumeServiceImpl implements IOnlineResumeService {
             return "";
         }
         return DATE_FORMATTER.format(value);
+    }
+
+    private String normalizeMonthText(String value) {
+        String trimmed = StringUtils.trimToNull(value);
+        if(trimmed == null) {
+            return "";
+        }
+        if(trimmed.matches("\\d{13}")) {
+            return MONTH_FORMATTER.format(Instant.ofEpochMilli(Long.parseLong(trimmed)).atZone(CHINA_ZONE));
+        }
+        if(trimmed.matches("\\d{10}")) {
+            return MONTH_FORMATTER.format(Instant.ofEpochSecond(Long.parseLong(trimmed)).atZone(CHINA_ZONE));
+        }
+        if(trimmed.length() >= 7 && trimmed.charAt(4) == '-') {
+            return trimmed.substring(0, 7);
+        }
+        return trimmed;
     }
 
     private void refreshLoginMember(Member updateMember) {

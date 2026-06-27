@@ -193,11 +193,19 @@ class OnlineResumeServiceImplTest {
         workExpectDto.setSalaryRangeStart(15);
         workExpectDto.setSalaryRangeEnd(25);
 
+        WorkExperienceDto workExperienceDto = new WorkExperienceDto();
+        workExperienceDto.setCompanyFullName("某某科技有限公司");
+        workExperienceDto.setJobName("AI产品经理");
+        workExperienceDto.setWorkDetail("负责产品规划");
+        workExperienceDto.setWorkDateStart("1622476800000");
+        workExperienceDto.setWorkDateEnd("2025-06-01 00:00:00");
+
         MemberExp memberExp = new MemberExp();
         memberExp.setMemberId(memberId);
         memberExp.setStatus(1);
         memberExp.setAdvantage("沟通能力强");
         memberExp.setWorkExpect(cn.hutool.json.JSONUtil.toJsonStr(Collections.singletonList(workExpectDto)));
+        memberExp.setWorkExperience(cn.hutool.json.JSONUtil.toJsonStr(Collections.singletonList(workExperienceDto)));
         memberExp.setQualification(cn.hutool.json.JSONUtil.toJsonStr(Arrays.asList("PMP")));
 
         when(memberService.getById(memberId)).thenReturn(member);
@@ -213,6 +221,10 @@ class OnlineResumeServiceImplTest {
         assertThat(response.getLastActiveTime()).isEqualTo(LocalDateTime.of(2026, 6, 27, 10, 0));
         assertThat(response.getAdvantage()).isEqualTo("沟通能力强");
         assertThat(response.getWorkExpectDtoList()).hasSize(1);
+        assertThat(response.getWorkExperienceDtoList()).hasSize(1);
+        assertThat(response.getWorkExperienceDtoList().get(0).getWorkDateStart()).isEqualTo("2021-06");
+        assertThat(response.getWorkExperienceDtoList().get(0).getWorkDateEnd()).isEqualTo("2025-06");
+        assertThat(response.getWorkExperienceDtoList().get(0).getJob()).isEqualTo("AI产品经理");
         assertThat(response.getQualificationList()).containsExactly("PMP");
     }
 
