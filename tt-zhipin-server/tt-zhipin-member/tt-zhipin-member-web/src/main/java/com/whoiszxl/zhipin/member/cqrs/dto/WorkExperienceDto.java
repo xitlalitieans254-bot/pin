@@ -1,32 +1,36 @@
 package com.whoiszxl.zhipin.member.cqrs.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-import java.time.LocalDateTime;
-
 @Data
-@Schema(description = "工作经验实体")
+@Schema(description = "Work experience")
 public class WorkExperienceDto {
 
-    @Schema(description = "公司名称")
+    @Schema(description = "Frontend temp id")
+    private String id;
+
+    @Schema(description = "Company name")
     private String companyFullName;
 
-    @Schema(description = "所在行业")
+    @Schema(description = "Industry")
     private String industry;
 
-    @Schema(description = "在职时间起始值")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private LocalDateTime workDateStart;
+    @Schema(description = "Start date, yyyy-MM or yyyy-MM-dd")
+    private String workDateStart;
 
-    @Schema(description = "在职时间结束值")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private LocalDateTime workDateEnd;
+    @Schema(description = "End date, yyyy-MM or yyyy-MM-dd")
+    private String workDateEnd;
 
-    @Schema(description = "职位名称")
+    @Schema(description = "Job title, preferred field for frontend")
+    private String job;
+
+    @Schema(description = "Job title, legacy field")
     private String jobName;
 
-    @Schema(description = "工作内容")
+    @Schema(description = "Work content, preferred field for frontend")
+    private String workContent;
+
+    @Schema(description = "Work content, legacy field")
     private String workDetail;
 }

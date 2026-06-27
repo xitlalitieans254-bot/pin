@@ -4,26 +4,27 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 @Data
-@Schema(description = "求职期望实体")
+@Schema(description = "Work expectation")
 public class WorkExpectDto {
 
-    @Schema(description = "求职类型：1-全职 2-兼职")
+    @Schema(description = "Frontend temp id")
+    private String id;
+
+    @Schema(description = "Work type: 1 full-time, 2 part-time")
     private Integer type;
 
-    @Schema(description = "工作城市")
+    @Schema(description = "Expected city")
     private String city;
 
-    @Schema(description = "期望职位")
+    @Schema(description = "Expected job")
     private String job;
 
-    @Schema(description = "薪资要求-起始值")
+    @Schema(description = "Expected salary start, unit K")
     private Integer salaryRangeStart;
 
-    @Schema(description = "薪资要求-结束值")
+    @Schema(description = "Expected salary end, unit K")
     private Integer salaryRangeEnd;
 
-    @Schema(description = "期望行业")
+    @Schema(description = "Expected industries")
     private String[] industryArr;
-
-
 }

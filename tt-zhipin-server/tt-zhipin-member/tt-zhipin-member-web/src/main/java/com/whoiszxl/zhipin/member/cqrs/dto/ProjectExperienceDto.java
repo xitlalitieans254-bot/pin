@@ -1,33 +1,36 @@
 package com.whoiszxl.zhipin.member.cqrs.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-import java.time.LocalDateTime;
-
 @Data
-@Schema(description = "项目经验实体")
+@Schema(description = "Project experience")
 public class ProjectExperienceDto {
 
-    @Schema(description = "项目名称")
+    @Schema(description = "Frontend temp id")
+    private String id;
+
+    @Schema(description = "Project name")
     private String projectName;
 
-    @Schema(description = "担任角色")
+    @Schema(description = "Project role, preferred field for frontend")
+    private String role;
+
+    @Schema(description = "Project role, legacy field")
     private String projectRole;
 
-    @Schema(description = "项目时间起始值")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private LocalDateTime projectDateStart;
+    @Schema(description = "Start date, yyyy-MM or yyyy-MM-dd")
+    private String projectDateStart;
 
-    @Schema(description = "项目时间结束值")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private LocalDateTime projectDateEnd;
+    @Schema(description = "End date, yyyy-MM or yyyy-MM-dd")
+    private String projectDateEnd;
 
-    @Schema(description = "项目业绩")
+    @Schema(description = "Project content, preferred field for frontend")
+    private String projectContent;
+
+    @Schema(description = "Project result, legacy field")
     private String projectResult;
 
-    @Schema(description = "项目链接")
+    @Schema(description = "Project link")
     private String projectLink;
-
 }

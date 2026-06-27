@@ -10,28 +10,27 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-@Schema(description = "在线简历保存命令")
-public class OnlineResumeSaveCommand {
+@Schema(description = "Online resume save command")
+public class OnlineResumeSaveCommand extends OnlineResumeBaseSaveCommand {
 
-    @Schema(description = "个人优势")
+    @Schema(description = "Personal advantage")
     private String advantage;
 
-    @Schema(description = "求职期望列表")
+    @Schema(description = "Work expectation list")
     private List<WorkExpectDto> workExpectDtoList;
 
-    @Schema(description = "工作经历列表")
+    @Schema(description = "Work experience list")
     private List<WorkExperienceDto> workExperienceDtoList;
 
-    @Schema(description = "项目经历列表")
+    @Schema(description = "Project experience list")
     private List<ProjectExperienceDto> projectExperienceDtoList;
 
-    @Schema(description = "教育经历列表")
+    @Schema(description = "Education experience list")
     private List<EduExperienceDto> eduExperienceDtoList;
 
-    @Schema(description = "资格证书列表")
+    @Schema(description = "Qualification list")
     private List<String> qualificationList;
 
     @Schema(description = "Skill tag list")
     private List<String> skillTagList;
-
 }

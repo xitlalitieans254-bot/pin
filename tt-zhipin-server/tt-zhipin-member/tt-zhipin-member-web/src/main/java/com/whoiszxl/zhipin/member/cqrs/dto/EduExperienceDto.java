@@ -4,28 +4,30 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 @Data
-@Schema(description = "教育经历实体")
+@Schema(description = "Education experience")
 public class EduExperienceDto {
 
-    @Schema(description = "学校")
+    @Schema(description = "Frontend temp id")
+    private String id;
+
+    @Schema(description = "School name")
     private String schoolName;
 
-    @Schema(description = "学历")
+    @Schema(description = "Education attainment")
     private String educationAttainment;
 
-    @Schema(description = "专业")
+    @Schema(description = "Major")
     private String major;
 
-    @Schema(description = "时间段起始值，以年份为单位")
+    @Schema(description = "Start year")
     private Integer yearStart;
 
-    @Schema(description = "时间段结束值，以年份为单位")
+    @Schema(description = "End year")
     private Integer yearEnd;
 
-    @Schema(description = "在校经历")
+    @Schema(description = "School experience")
     private String schoolExp;
 
-    @Schema(description = "毕业设计/论文")
+    @Schema(description = "Paper or graduation design")
     private String paper;
-
 }

@@ -1,94 +1,107 @@
 package com.whoiszxl.zhipin.member.cqrs.response;
 
-import com.baomidou.mybatisplus.annotation.TableLogic;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.annotation.Version;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
-/**
- * <p>
- * 会员表
- * </p>
- *
- * @author whoiszxl
- * @since 2023-08-08
- */
 @Data
-@Schema(description = "用户推荐返回实体")
+@Schema(description = "Recommended member response")
 public class MemberRecommandResponse implements Serializable {
 
-    @Schema(description = "主键ID")
+    @Schema(description = "Member id")
     private Long id;
 
-    @Schema(description = "手机")
+    @Schema(description = "Phone")
     private String phone;
 
-    @Schema(description = "邮箱(选填)")
+    @Schema(description = "Email")
     private String email;
 
-    @Schema(description = "全名")
+    @Schema(description = "Full name")
     private String fullName;
 
-    @Schema(description = "参加工作时间")
+    @Schema(description = "First work date")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime workDate;
 
-    @Schema(description = "微信号")
+    @Schema(description = "Wechat code")
     private String wxCode;
 
-    @Schema(description = "生日")
+    @Schema(description = "Birthday")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime birthday;
 
-    @Schema(description = "国家")
+    @Schema(description = "Country")
     private String country;
 
-    @Schema(description = "省份")
+    @Schema(description = "Province")
     private String province;
 
-    @Schema(description = "城市")
+    @Schema(description = "City")
     private String city;
 
-    @Schema(description = "区域")
+    @Schema(description = "District")
     private String district;
 
-    @Schema(description = "状态(1:男 2:女 3:未知)")
+    @Schema(description = "Gender")
     private Integer gender;
 
-    @Schema(description = "头像")
+    @Schema(description = "Avatar")
     private String avatar;
 
-    @Schema(description = "IP地址")
+    @Schema(description = "IP")
     private String ip;
 
-    @Schema(description = "会员登录次数")
+    @Schema(description = "Login count")
     private Long loginCount;
 
-    @Schema(description = "会员登录错误次数")
+    @Schema(description = "Login error count")
     private Long loginErrorCount;
 
-    @Schema(description = "最后登录")
+    @Schema(description = "Last login")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime lastLogin;
 
-    @Schema(description = "身份状态(1:职场人 2:学生)")
+    @Schema(description = "Identity status")
     private Integer identityStatus;
 
-    @Schema(description = "求职状态(1:离职-随时到岗 2:在职-月内到岗 3:在职-考虑机会 4:在职-暂不考虑)")
+    @Schema(description = "Work status")
     private Integer workStatus;
 
-    @Schema(description = "最高学历(1:初中及以下 2:中专/中技 3:高中 4:大专 5:本科 6-硕士 7-博士)")
+    @Schema(description = "Highest qualification")
     private Integer highestQualification;
 
-    @Schema(description = "最高学历类型(1:全日制 2:非全日制)")
+    @Schema(description = "Highest qualification type")
     private Integer highestQualificationType;
 
-    @Schema(description = "是否是头头(0:否 1:是)")
+    @Schema(description = "Whether member is boss")
     private Integer isToutou;
 
+    @Schema(description = "Whether resume is visible to boss")
+    private Boolean visible = true;
+
+    @Schema(description = "Resume advantage")
+    private String advantage;
+
+    @Schema(description = "Resume summary")
+    private String summary;
+
+    @Schema(description = "First expected job")
+    private String expectJob;
+
+    @Schema(description = "Expected jobs")
+    private List<String> expectJobs;
+
+    @Schema(description = "Expected city")
+    private String expectCity;
+
+    @Schema(description = "Expected salary start, unit K")
+    private Integer salaryRangeStart;
+
+    @Schema(description = "Expected salary end, unit K")
+    private Integer salaryRangeEnd;
 }

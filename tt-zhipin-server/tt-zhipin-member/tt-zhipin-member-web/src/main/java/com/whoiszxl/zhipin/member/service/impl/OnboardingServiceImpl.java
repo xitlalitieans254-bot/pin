@@ -348,8 +348,8 @@ public class OnboardingServiceImpl extends ServiceImpl<MemberOnboardingMapper, M
         workExperience.setCompanyFullName(recentCompany.getStr("companyFullName"));
         workExperience.setIndustry(recentWork.getStr("industry"));
         workExperience.setJobName(recentWork.getStr("jobName"));
-        workExperience.setWorkDateStart(monthDate(workPeriod, "startYear", "startMonth"));
-        workExperience.setWorkDateEnd(monthDate(workPeriod, "endYear", "endMonth"));
+        workExperience.setWorkDateStart(monthText(workPeriod, "startYear", "startMonth"));
+        workExperience.setWorkDateEnd(monthText(workPeriod, "endYear", "endMonth"));
         workExperience.setWorkDetail(workDetail.getStr("workDetail"));
         if(hasWorkExperience(workExperience)) {
             memberExp.setWorkExperience(JSONUtil.toJsonStr(Collections.singletonList(workExperience)));
@@ -532,6 +532,15 @@ public class OnboardingServiceImpl extends ServiceImpl<MemberOnboardingMapper, M
             return null;
         }
         return LocalDateTime.of(year, month, 1, 0, 0);
+    }
+
+    private String monthText(JSONObject object, String yearKey, String monthKey) {
+        Integer year = object.getInt(yearKey);
+        Integer month = object.getInt(monthKey);
+        if(year == null || month == null || month < 1 || month > 12) {
+            return null;
+        }
+        return String.format("%04d-%02d", year, month);
     }
 
     private boolean isYes(Integer value) {
